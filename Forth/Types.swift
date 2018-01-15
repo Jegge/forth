@@ -19,3 +19,5 @@ struct Flags {
     static let hidden: Byte = 0x20
     static let lenmask: Byte = 0x1f
 }
+
+typealias Block = (() throws -> Void)

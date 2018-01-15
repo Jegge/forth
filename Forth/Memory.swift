@@ -10,7 +10,7 @@ import Foundation
 
 class Memory {
 
-    private var natives: [Address: () throws -> Void] = [:]
+    private var natives: [Address: Block] = [:]
     private var data = Data(count: Int(Address.max))
 
     private (set) var here: Address = 0
@@ -60,7 +60,7 @@ class Memory {
         return false
     }
 
-    func defineWord(name: String, link: Address, immediate: Bool = false, code: @escaping () throws -> Void) -> Address {
+    func defineWord(name: String, link: Address, immediate: Bool = false, code: @escaping Block) -> Address {
 
         /*   pointer to previous word
             ^
@@ -115,24 +115,23 @@ class Memory {
         let count = 16
         print("       | ", separator: "", terminator: "")
         for index in (0..<count) {
-            print(String(format: "% 3d ", index), separator: "", terminator: "")
+            print(String(format: "% 4d ", index), separator: "", terminator: "")
         }
         print()
         print("---------", separator: "", terminator: "")
         for _ in (0..<count) {
-            print("----", separator: "", terminator: "")
+            print("-----", separator: "", terminator: "")
         }
         print()
-
 
         while address < cap {
             print(String(format: "% 6d | ", address), separator: "", terminator: "")
             for index in (0..<count) {
                 let b = self.get(byteAt: address + Address(index))
                 if b > 31 && b < 127 {
-                    print(String(format: "% 3c ", b), separator: "", terminator: "")
+                    print(String(format: "% 4c ", b), separator: "", terminator: "")
                 } else {
-                    print(String(format: "% 3d ", b), separator: "", terminator: "")
+                    print(String(format: "% 4d ", b), separator: "", terminator: "")
                 }
             }
             print()
