@@ -13,7 +13,17 @@ class Memory {
     private var natives: [Address: Block] = [:]
     private var data = Data(count: Int(Address.max))
 
-    private (set) var here: Address = 0
+    init () {
+        self.here = 2
+    }
+    private (set) var here: Address {
+        set {
+            self.set(address: newValue, at: 0)
+        }
+        get {
+            return self.get(addressAt: 0)
+        }
+    }
 
     func set(byte: Byte, at addr: Address) {
         self.data[Int(addr)] = byte

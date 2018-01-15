@@ -28,10 +28,6 @@ class Machine {
         self.pstack = Stack(memory: self.memory, top: Address.max, size: self.stackSize)
         self.rstack = Stack(memory: self.memory, top: Address.max - self.stackSize, size: self.stackSize)
 
-        self.memory.insert(byte: 1)
-        self.memory.insert(byte: 0)
-
-
         let docol = self.memory.defineWord(name: ":", link: 0) {
             try self.rstack.push(address: self.oldIp)
         }
