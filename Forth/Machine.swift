@@ -26,6 +26,8 @@ class Machine {
         self.memory = Memory()
         self.pstack = Stack(memory: self.memory, top: Address.max, size: self.stackSize)
         self.rstack = Stack(memory: self.memory, top: Address.max - self.stackSize, size: self.stackSize)
+        
+        let wordbuffer = self.memory.insert(bytes: 32)
 
         let docol = self.memory.defineWord(name: ":", link: 0) {
             try self.rstack.push(address: self.oldIp)
@@ -245,13 +247,15 @@ class Machine {
         let latest = self.memory.defineVariable(name: "LATEST", link: fetchb, stack: self.pstack)
         let here = self.memory.defineWord(name: "HERE", link: latest) { try self.pstack.push(address: 0) }
         let state = self.memory.defineVariable(name: "STATE", link: here, stack: self.pstack)
-
-        let version = self.memory.defineConstant(name: "VERSION", link: state, cell: self.version, stack: self.pstack)
+        let base = self.memory.defineVariable(name: "BASE", link: state, stack: self.pstack, value: 10)
+        
+        let version = self.memory.defineConstant(name: "VERSION", link: base, cell: self.version, stack: self.pstack)
         //let s0 = self.memory.defineConstant(name: "S0", link: version, address: self.pstack.top, stack: self.pstack)
         let r0 = self.memory.defineConstant(name: "R0", link: version, address: self.rstack.top, stack: self.pstack)
         let cdocol = self.memory.defineConstant(name: "DOCOL", link: r0, address: self.memory.cfa(docol), stack: self.pstack)
+        let wbuffer = self.memory.defineConstant(name: "WBUFFER", link: cdocol, address: wordbuffer, stack: self.pstack)
 
-        let f_immed = self.memory.defineConstant(name: "F_IMMED", link: cdocol, byte: Flags.immediate, stack: self.pstack)
+        let f_immed = self.memory.defineConstant(name: "F_IMMED", link: wbuffer, byte: Flags.immediate, stack: self.pstack)
         let f_hidden = self.memory.defineConstant(name: "F_HIDDEN", link: f_immed, byte: Flags.hidden, stack: self.pstack)
         let f_lenmask = self.memory.defineConstant(name: "F_LENMASK", link: f_hidden, byte: Flags.lenmask, stack: self.pstack)
 
@@ -282,20 +286,28 @@ class Machine {
 //        }
 
         let key = self.memory.defineWord(name: "KEY", link: rdrop) {
-            let c = getchar()
-            if c == EOF {
-                abort()
-            }
+            let c = self.key()
             try self.pstack.push(cell: Cell(c))
         }
         let emit = self.memory.defineWord(name: "EMIT", link: key) {
             putchar(Int32(try self.pstack.popCell()))
         }
         let word = self.memory.defineWord(name: "WORD", link: emit) {
-
+            let buffer = self.word()
+            self.memory.set(bytes: buffer, at: wordbuffer)
+            try self.pstack.push(address: wordbuffer)
+            try self.pstack.push(cell: Cell(buffer.count))
+        }
+        let number = self.memory.defineWord(name: "NUMBER", link: word) {
+            let length = try self.pstack.popCell()
+            let address = try self.pstack.popAddress()
+            let buffer = self.memory.get(bytesAt: address, length: length)
+            let (result, unconverted) = self.number(buffer: buffer, base: self.memory.get(cellAt: base))
+            try self.pstack.push(address: Address(result))
+            try self.pstack.push(cell: Cell(unconverted))
         }
 
-        let double = self.memory.defineWord(name: "DOUBLE", link: word, words: [
+        let double = self.memory.defineWord(name: "DOUBLE", link: number, words: [
             self.memory.cfa(docol),
             self.memory.cfa(lit), 2,
             self.memory.cfa(mult),
@@ -321,6 +333,47 @@ class Machine {
     private func next () {
         self.nxtIp += Address(MemoryLayout<Address>.size)
         self.oldIp = self.nxtIp
+    }
+    
+    private func key() -> Byte {
+        let c = getchar()
+        if c == EOF {
+            abort()
+        }
+        return Byte(c)
+    }
+    
+    private func word() -> [Byte] {
+        var buffer: [Byte] = []
+        var character: Byte = 0
+        
+        // skip spaces and comments
+        while (true) {
+            character = self.key()
+            while character == 32 {
+                character = self.key()
+            }
+            
+            if character == 92 {
+                while character != 10 {
+                    character = self.key()
+                }
+            } else {
+                break
+            }
+        }
+        
+        // read word until space or newline or comment
+        while character != 32 && character != 10 && character != 92 {
+            buffer.append(Byte(character))
+            character = self.key()
+        }
+        
+        return buffer
+    }
+    
+    private func number (buffer: [Byte], base: Cell) -> (Cell, Cell) {
+        return (0, 0)
     }
 
     func run () throws {

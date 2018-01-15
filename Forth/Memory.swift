@@ -35,15 +35,31 @@ class Memory {
     func set(cell: Cell, at addr: Address) {
         self.set(address: Address(bitPattern:cell), at: addr)
     }
+    func set(bytes: [Byte], at addr: Address) {
+        for index in 0..<bytes.count {
+            self.set(byte: bytes[index], at: addr + Address(index))
+        }
+    }
+    func set(string: String, at addr: Address) {
+        self.set(bytes: Array(string.utf8), at: addr)
+    }
     func get(byteAt addr: Address) -> Byte {
         return self.data[Int(addr)]
     }
-    func get(addressAt addr: Address) -> Address{
+    func get(addressAt addr: Address) -> Address {
         return Address(self.data[Int(addr)]) << 8 | Address(self.data[Int(addr + 1)])
     }
     func get(cellAt addr: Address) -> Cell {
         return Cell(bitPattern: self.get(addressAt: addr))
     }
+    func get(bytesAt addr: Address, length: Cell) -> [Byte] {
+        var buffer: [Byte] = []
+        for index in 0..<length {
+            buffer.append(self.get(byteAt: addr + Address(index)))
+        }
+        return buffer
+    }
+
     func insert(byte: Byte) {
         self.set(byte: byte, at: self.here)
         self.here += Address(MemoryLayout<Byte>.size)
@@ -61,6 +77,13 @@ class Memory {
             self.insert(byte: char)
         }
     }
+    func insert(bytes count: Address) -> Address {
+        let address = self.here
+        for _ in 0..<count {
+            self.insert(byte: 0)
+        }
+        return address
+    }
 
     func runNative(at address: Address) throws -> Bool {
         if let block = self.natives[address] {
@@ -75,12 +98,12 @@ class Memory {
         /*   pointer to previous word
             ^
             |
-         +--|------+---+---+---+---+---+---+---+---+------------+
-         | LINK    | 6 | D | O | U | B | L | E | 0 | NATIVE     |
-         +---------+---+---+---+---+---+---+---+---+------------+
-            ^       len                         pad  codeword
-            |                                      ^
-            LINK in next word                      this address can be looked up in the natives dictionary to get the code block
+         +--|------+---+---+---+---+---+---+---+
+         | LINK    | 6 | D | O | U | B | L | E |
+         +---------+---+---+---+---+---+---+---+
+            ^       len                        |
+            |                                  V
+            LINK in next word                  this address can be looked up in the natives dictionary to get the code block
          */
 
         let address = self.here
@@ -96,12 +119,12 @@ class Memory {
         /*  pointer to previous word
             ^
             |
-         +--|------+---+---+---+---+---+---+---+---+------------+------------+------------+------------+
-         | LINK    | 6 | D | O | U | B | L | E | 0 | DOCOL      | DUP        | +          | EXIT       |
-         +---------+---+---+---+---+---+---+---+---+------------+--|---------+------------+------------+
-            ^       len                         pad  codeword      |
-            |                                                      V
-            LINK in next word                                      points to codeword of DUP
+         +--|------+---+---+---+---+---+---+---+------------+------------+------------+------------+
+         | LINK    | 6 | D | O | U | B | L | E | DOCOL      | DUP        | +          | EXIT       |
+         +---------+---+---+---+---+---+---+---+------------+--|---------+------------+------------+
+            ^       len                                        |
+            |                                                  V
+            LINK in next word                                  points to codeword of DUP
          */
 
         let address = self.here
@@ -114,9 +137,9 @@ class Memory {
         return address
     }
 
-    func defineVariable(name: String, link: Address, stack: Stack) -> Address {
+    func defineVariable(name: String, link: Address, stack: Stack, value: Address = 0) -> Address {
         let address = self.here
-        self.insert(address: 0)
+        self.insert(address: value)
         return self.defineWord(name: name, link: link) {
             try stack.push(address: address)
         }
@@ -137,7 +160,7 @@ class Memory {
             try stack.push(address: Address(byte))
         }
     }
-
+    
     func cfa(_ address: Address) -> Address {
         // returns address of codeword for given LINK
         let len = self.get(byteAt: address + Address(MemoryLayout<Address>.size)) & Flags.lenmask
