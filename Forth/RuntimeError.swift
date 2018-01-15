@@ -1,5 +1,5 @@
 //
-//  main.swift
+//  RuntimeError.swift
 //  Forth
 //
 //  Created by Sebastian Boettcher on 15.01.18.
@@ -8,10 +8,7 @@
 
 import Foundation
 
-do {
-    let vm = Machine()
-    try vm.run()
-} catch {
-    print()
-    print("ERROR: \(error)")
+enum RuntimeError: Error {
+    case stackDepleted
+    case stackOverflow
 }
