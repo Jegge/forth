@@ -114,6 +114,30 @@ class Memory {
         return address
     }
 
+    func defineVariable(name: String, link: Address, stack: Stack) -> Address {
+        let address = self.here
+        self.insert(address: 0)
+        return self.defineWord(name: name, link: link) {
+            try stack.push(address: address)
+        }
+    }
+
+    func defineConstant(name: String, link: Address, cell: Cell, stack: Stack) -> Address {
+        return self.defineWord(name: name, link: link) {
+            try stack.push(cell: cell)
+        }
+    }
+    func defineConstant(name: String, link: Address, address: Address, stack: Stack) -> Address {
+        return self.defineWord(name: name, link: link) {
+            try stack.push(address: address)
+        }
+    }
+    func defineConstant(name: String, link: Address, byte: Byte, stack: Stack) -> Address {
+        return self.defineWord(name: name, link: link) {
+            try stack.push(address: Address(byte))
+        }
+    }
+
     func cfa(_ address: Address) -> Address {
         // returns address of codeword for given LINK
         let len = self.get(byteAt: address + Address(MemoryLayout<Address>.size)) & Flags.lenmask
@@ -123,26 +147,28 @@ class Memory {
     func dump (cap: Address = Address.max) {
         var address: Address = 0
         let count = 16
-        print("       | ", separator: "", terminator: "")
+        print("       ", separator: "", terminator: "")
         for index in (0..<count) {
-            print(String(format: "% 4d ", index), separator: "", terminator: "")
+            print(String(format: "| %3d   ", index), separator: "", terminator: "")
         }
         print()
         print("---------", separator: "", terminator: "")
         for _ in (0..<count) {
-            print("-----", separator: "", terminator: "")
+            print("--------", separator: "", terminator: "")
         }
         print()
 
         while address < cap {
-            print(String(format: "% 6d | ", address), separator: "", terminator: "")
+            print(String(format: "% 6d ", address), separator: "", terminator: "")
             for index in (0..<count) {
                 let b = self.get(byteAt: address + Address(index))
+                print(String(format: "| %3d ", b), separator: "", terminator: "")
                 if b > 31 && b < 127 {
-                    print(String(format: "% 4c ", b), separator: "", terminator: "")
+                    print(String(format: "%c ", b), separator: "", terminator: "")
                 } else {
-                    print(String(format: "% 4d ", b), separator: "", terminator: "")
+                    print("  ", separator: "", terminator: "")
                 }
+
             }
             print()
             address += Address(count)

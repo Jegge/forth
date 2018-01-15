@@ -8,11 +8,10 @@
 
 import Foundation
 
-
-
 class Machine {
 
     private let stackSize: Address = 1024
+    private let version: Cell = 0x0100
 
     private var memory: Memory
     private var pstack: Stack
@@ -21,7 +20,7 @@ class Machine {
     private var oldIp: Address = 0  // current / previous instruction pointer
     private var nxtIp: Address = 0  // next instruction pointer
 
-    private var latest: Address = 0
+    private var latestAddress: Address = 0 // temporary, TODO: remove
 
     init () {
         self.memory = Memory()
@@ -243,15 +242,60 @@ class Machine {
             try self.pstack.push(cell: Cell(self.memory.get(byteAt: try self.pstack.popAddress())))
         }
 
-//        let latest = self.memory.defineWord(name: "LATEST", link: fetchb) {
-//            self.pstack.push()
-//            self.next()
+        let latest = self.memory.defineVariable(name: "LATEST", link: fetchb, stack: self.pstack)
+        let here = self.memory.defineWord(name: "HERE", link: latest) { try self.pstack.push(address: 0) }
+        let state = self.memory.defineVariable(name: "STATE", link: here, stack: self.pstack)
+
+        let version = self.memory.defineConstant(name: "VERSION", link: state, cell: self.version, stack: self.pstack)
+        //let s0 = self.memory.defineConstant(name: "S0", link: version, address: self.pstack.top, stack: self.pstack)
+        let r0 = self.memory.defineConstant(name: "R0", link: version, address: self.rstack.top, stack: self.pstack)
+        let cdocol = self.memory.defineConstant(name: "DOCOL", link: r0, address: self.memory.cfa(docol), stack: self.pstack)
+
+        let f_immed = self.memory.defineConstant(name: "F_IMMED", link: cdocol, byte: Flags.immediate, stack: self.pstack)
+        let f_hidden = self.memory.defineConstant(name: "F_HIDDEN", link: f_immed, byte: Flags.hidden, stack: self.pstack)
+        let f_lenmask = self.memory.defineConstant(name: "F_LENMASK", link: f_hidden, byte: Flags.lenmask, stack: self.pstack)
+
+        let tor = self.memory.defineWord(name: ">R", link: f_lenmask) {
+            try self.rstack.push(address: try self.pstack.popAddress())
+        }
+        let fromr = self.memory.defineWord(name: "R>", link: tor) {
+            try self.pstack.push(address: try self.rstack.popAddress())
+        }
+//        let rspfetch = self.memory.defineWord(name: "RSP@", link: fromr) {
+//            let a = try self.rstack.popAddress()
+//            try self.rstack.push(address: a)
+//            try self.pstack.push(address: a)
+//        }
+//        let rspstore = self.memory.defineWord(name: "RSP!", link: rspfetch) {
+//            let a = try self.pstack.popAddress()
+//            try self.rstack.push(address: a)
+//            try self.pstack.push(address: a)
+//        }
+        let rdrop = self.memory.defineWord(name: "RDROP", link: fromr) {
+            _ = try self.rstack.popAddress()
+        }
+//        let dspfetch = self.memory.defineWord(name: "DSP@", link: rdrop) {
+//            _ = try self.rstack.popAddress()
+//        }
+//        let dspstore = self.memory.defineWord(name: "DSP!", link: dspfetch) {
+//            _ = try self.rstack.popAddress()
 //        }
 
+        let key = self.memory.defineWord(name: "KEY", link: rdrop) {
+            let c = getchar()
+            if c == EOF {
+                abort()
+            }
+            try self.pstack.push(cell: Cell(c))
+        }
+        let emit = self.memory.defineWord(name: "EMIT", link: key) {
+            putchar(Int32(try self.pstack.popCell()))
+        }
+        let word = self.memory.defineWord(name: "WORD", link: emit) {
 
+        }
 
-
-        let double = self.memory.defineWord(name: "DOUBLE", link: fetchb, words: [
+        let double = self.memory.defineWord(name: "DOUBLE", link: word, words: [
             self.memory.cfa(docol),
             self.memory.cfa(lit), 2,
             self.memory.cfa(mult),
@@ -270,7 +314,8 @@ class Machine {
             self.memory.cfa(exit)
         ])
 
-        self.latest = test
+        self.memory.set(address: test, at: latest)
+        self.latestAddress = test
     }
 
     private func next () {
@@ -280,9 +325,9 @@ class Machine {
 
     func run () throws {
 
-        self.memory.dump(cap: self.latest + 10)
+        self.memory.dump(cap: self.latestAddress + 10)
         print()
-        self.nxtIp = self.memory.cfa(self.latest) // Start with "TEST"
+        self.nxtIp = self.memory.cfa(self.latestAddress) // Start with "TEST"
 
         while true {
             let word = self.memory.get(addressAt: self.nxtIp)
