@@ -32,6 +32,9 @@ class Dictionary {
     }
 
     private func define(word name: String, immediate: Bool) -> Cell {
+
+        self.memory.align()
+
         let link = self.memory.here
 
         self.memory.append(cell: self.latest)
@@ -59,6 +62,27 @@ class Dictionary {
         return here
     }
 
+    func define(variable name: String, value: Cell? = nil, address: Cell? = nil, stack: Stack) -> Cell {
 
+        var location: Cell
+        if let address = address {
+            location = address
+        } else {
+            location = self.memory.here
+            if let value = value {
+                self.memory.append(cell: value)
+            }
+        }
+        return self.define(word: name) {
+            try stack.push(location)
+        }
+    }
+
+    func define(constant name: String, value: Cell, stack: Stack) -> Cell {
+
+        return self.define(word: name) {
+            try stack.push(value)
+        }
+    }
 }
 

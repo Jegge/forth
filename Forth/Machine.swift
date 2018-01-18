@@ -29,18 +29,51 @@ class Machine {
         }
     }
 
+    var base: Cell {
+        set {
+            self.memory[Address.base] = newValue
+        }
+        get {
+            return self.memory[Address.base]
+        }
+    }
+
+    var trace: Cell {
+        set {
+            self.memory[Address.trace] = newValue
+        }
+        get {
+            return self.memory[Address.trace]
+        }
+    }
+
     init (system: SystemProvided, chunk: Cell = 4096) {
         self.system = system
         self.memory = Memory(chunk: chunk)
-        self.pstack = Stack(memory: self.memory, top: Address.pstack, size: 512)
-        self.rstack = Stack(memory: self.memory, top: Address.rstack, size: 256)
+        self.pstack = Stack(memory: self.memory, top: Address.pstack, size: 512, topStorage: Address.s0)
+        self.rstack = Stack(memory: self.memory, top: Address.rstack, size: 256, topStorage: Address.r0)
         self.memory.here = Address.dictionary
         self.dictionary = Dictionary(memory: self.memory)
-        self.state = State.immediate
-        
+
+        _ = self.dictionary.define(variable: "HERE", address: Address.here, stack: self.pstack)
+        _ = self.dictionary.define(variable: "STATE", value: State.immediate, address: Address.state, stack: self.pstack)
+        _ = self.dictionary.define(variable: "LATEST", address: Address.latest, stack: self.pstack)
+        _ = self.dictionary.define(variable: "BASE", value: 10, address: Address.base, stack: self.pstack)
+        _ = self.dictionary.define(variable: "TRACE", value: 0, address: Address.trace, stack: self.pstack)
+        _ = self.dictionary.define(variable: "S0", address: Address.s0, stack: self.pstack)
+
+        _ = self.dictionary.define(constant: "VERSION", value: Constants.version, stack: self.pstack)
+        _ = self.dictionary.define(constant: "R0", value: Address.r0, stack: self.pstack)
+        _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Flags.immediate), stack: self.pstack)
+        _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Flags.hidden), stack: self.pstack)
+        _ = self.dictionary.define(constant: "F_LENMASK", value: Cell(Flags.lenmask), stack: self.pstack)
+
         let docol = self.dictionary.define(word: ":") {
             try self.rstack.push(self.oldIp)
         }
+
+        _ = self.dictionary.define(constant: "DOCOL", value: docol, stack: self.pstack)
+
         let exit = self.dictionary.define(word: ";") {
             self.nxtIp = try self.rstack.pop()
         }

@@ -12,15 +12,25 @@ class Stack {
 
     private let memory: Memory
     private let size: Cell
+    private let topStorage: Cell
 
-    let top: Cell
+    var top: Cell {
+        set {
+            self.memory[self.topStorage] = newValue
+        }
+        get {
+            return self.memory[self.topStorage]
+        }
+    }
+
     var ptr: Cell
 
-    init(memory: Memory, top: Cell, size: Cell) {
+    init(memory: Memory, top: Cell, size: Cell, topStorage: Cell) {
         self.memory = memory
-        self.top = top
+        self.topStorage = topStorage
         self.ptr = top
         self.size = size
+        self.top = top
     }
 
     func push(_ cell: Cell) throws {

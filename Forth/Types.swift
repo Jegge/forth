@@ -23,7 +23,12 @@ struct Address {
     static let here: Cell = 0
     static let latest: Cell = 4
     static let state: Cell = 8
-    static let buffer: Cell = 12
+    static let base: Cell = 12
+    static let trace: Cell = 16
+    static let r0: Cell = 20
+    static let s0: Cell = 24
+    static let buffer: Cell = 28
+
     static let rstack: Cell = 512
     static let pstack: Cell = 1024
     static let dictionary: Cell = 1024
@@ -42,5 +47,5 @@ extension Character {
 
 struct Constants {
     static let wordlen: Int = 32
-    static let forthMachineVersion: Cell = 1
+    static let version: Cell = 1
 }
