@@ -45,33 +45,13 @@ class Dictionary {
 
     func define(word name: String, immediate: Bool = false, code: @escaping Code) -> Cell {
 
-        /*   pointer to previous word
-         ^
-         |
-         +--|------+---+---+---+---+---+---+---+
-         | LINK    | 6 | D | O | U | B | L | E |
-         +---------+---+---+---+---+---+---+---+
-         ^       len                        |
-         |                                  V
-         LINK in next word                  this address can be looked up in the natives dictionary to get the code block
-         */
-
         let here = self.define(word: name, immediate: immediate)
         self.code[here] = code
         return here
     }
 
     func define(word name: String, immediate: Bool = false, words: [Cell]) -> Cell {
-        /*  pointer to previous word
-         ^
-         |
-         +--|------+---+---+---+---+---+---+---+------------+------------+------------+------------+
-         | LINK    | 6 | D | O | U | B | L | E | DOCOL      | DUP        | +          | EXIT       |
-         +---------+---+---+---+---+---+---+---+------------+--|---------+------------+------------+
-         ^       len                                        |
-         |                                                  V
-         LINK in next word                                  points to codeword of DUP
-         */
+        
         let here = self.define(word: name, immediate: immediate)
         words.forEach {
             self.memory.append(cell: $0)

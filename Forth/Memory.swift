@@ -8,8 +8,6 @@
 
 import Foundation
 
-
-
 class Memory {
 
     private let chunk: Cell
@@ -74,21 +72,11 @@ class Memory {
         }
     }
 
-
-//    subscript (address: Cell) -> [Byte] {
-//        get {
-//            var buffer: [Byte] = []
-//            for index in 0..<length {
-//                buffer.append(self.data[address + Cell(index)])
-//            }
-//            return buffer
-//        }
-//        set {
-//            for index in 0..<bytes.count {
-//                self.data[address + Cell(index)] = bytes[index]
-//            }
-//        }
-//    }
+    func set(bytes: [Byte], at address: Cell) {
+        for index in 0..<bytes.count {
+            self.data[index + Int(address)] = bytes[index]
+        }
+    }
 
     func append(byte: Byte) {
         self[self.here] = byte
@@ -110,114 +98,6 @@ class Memory {
         }
     }
 
-/*
-    func insert(byte: Byte) {
-        self.set(byte: byte, at: self.here)
-        self.here += Address(MemoryLayout<Byte>.size)
-    }
-    func insert(address: Address) {
-        self.set(address: address, at: self.here)
-        self.here += Address(MemoryLayout<Address>.size)
-    }
-    func insert(cell: Cell) {
-        self.set(cell: cell, at: self.here)
-        self.here += Address(MemoryLayout<Cell>.size)
-    }
-    func insert(string: String) {
-        for char in Array(string.utf8) {
-            self.insert(byte: char)
-        }
-    }
-    func insert(bytes count: Address) -> Address {
-        let address = self.here
-        for _ in 0..<count {
-            self.insert(byte: 0)
-        }
-        return address
-    }
-
-    func runNative(at address: Address) throws -> Bool {
-        if let block = self.natives[address] {
-            try block()
-            return true
-        }
-        return false
-    }
-
-    func defineWord(name: String, link: Address, immediate: Bool = false, code: @escaping Block) -> Address {
-
-        /*   pointer to previous word
-            ^
-            |
-         +--|------+---+---+---+---+---+---+---+
-         | LINK    | 6 | D | O | U | B | L | E |
-         +---------+---+---+---+---+---+---+---+
-            ^       len                        |
-            |                                  V
-            LINK in next word                  this address can be looked up in the natives dictionary to get the code block
-         */
-
-        let address = self.here
-        self.insert(address: link)
-        self.insert(byte: (Byte(name.count) & Flags.lenmask) | (immediate ? Flags.immediate : Flags.none))
-        self.insert(string: name)
-        self.natives[self.here] = code
-        return address
-    }
-
-    func defineWord(name: String, link: Address, immediate: Bool = false, words: [Address]) -> Address {
-
-        /*  pointer to previous word
-            ^
-            |
-         +--|------+---+---+---+---+---+---+---+------------+------------+------------+------------+
-         | LINK    | 6 | D | O | U | B | L | E | DOCOL      | DUP        | +          | EXIT       |
-         +---------+---+---+---+---+---+---+---+------------+--|---------+------------+------------+
-            ^       len                                        |
-            |                                                  V
-            LINK in next word                                  points to codeword of DUP
-         */
-
-        let address = self.here
-        self.insert(address: link)
-        self.insert(byte: (Byte(name.count) & Flags.lenmask) | (immediate ? Flags.immediate : Flags.none))
-        self.insert(string: name)
-        for word in words {
-            self.insert(address: word)
-        }
-        return address
-    }
-
-    func defineVariable(name: String, link: Address, stack: Stack, value: Address = 0) -> Address {
-        let address = self.here
-        self.insert(address: value)
-        return self.defineWord(name: name, link: link) {
-            try stack.push(address: address)
-        }
-    }
-
-    func defineConstant(name: String, link: Address, cell: Cell, stack: Stack) -> Address {
-        return self.defineWord(name: name, link: link) {
-            try stack.push(cell: cell)
-        }
-    }
-    func defineConstant(name: String, link: Address, address: Address, stack: Stack) -> Address {
-        return self.defineWord(name: name, link: link) {
-            try stack.push(address: address)
-        }
-    }
-    func defineConstant(name: String, link: Address, byte: Byte, stack: Stack) -> Address {
-        return self.defineWord(name: name, link: link) {
-            try stack.push(address: Address(byte))
-        }
-    }
-    
-    func cfa(_ address: Address) -> Address {
-        // returns address of codeword for given LINK
-        let len = self.get(byteAt: address + Address(MemoryLayout<Address>.size)) & Flags.lenmask
-        return address + Address(MemoryLayout<Address>.size) + Address(len) + 1
-    }
-*/
     func dump (from: Cell, to: Cell) {
         var address: Cell = from
         let count = 16

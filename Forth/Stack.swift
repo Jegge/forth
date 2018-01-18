@@ -39,8 +39,4 @@ class Stack {
         self.ptr += Cell(MemoryLayout<Cell>.size)
         return cell
     }
-
-    func reset () {
-        self.ptr = self.top
-    }
 }

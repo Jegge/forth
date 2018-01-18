@@ -7,11 +7,26 @@
 //
 
 import Foundation
+import Darwin
 
-do {
-    let vm = Machine()
-    try vm.run()
-} catch {
+var lines: [String] = []
+
+//do {
+//    lines = try String(contentsOf: URL(fileURLWithPath: "./bootstrap.f"))
+//        .components(separatedBy: .newlines)
+//        .filter { !$0.isEmpty }
+//} catch {
+//    print()
+//    print("FATAL ERROR: \(error)")
+//    exit(0)
+//}
+
+let machine = Machine(system: System(lines: lines))
+
+signal(SIGINT) { _ in
     print()
-    print("ERROR: \(error)")
+    machine.interrupt()
 }
+
+machine.run()
+
