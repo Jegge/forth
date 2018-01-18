@@ -153,11 +153,11 @@ class Machine {
         _ = self.dictionary.define(word: "1-") {
             try self.pstack.push(try self.pstack.pop() - 1)
         }
-        let inc4 = self.dictionary.define(word: "4+") {
-            try self.pstack.push(try self.pstack.pop() + 4)
+        let inccell = self.dictionary.define(word: "C+") {
+            try self.pstack.push(try self.pstack.pop() + Memory.Size.cell)
         }
-        _ = self.dictionary.define(word: "4-") {
-            try self.pstack.push(try self.pstack.pop() - 4)
+        _ = self.dictionary.define(word: "C-") {
+            try self.pstack.push(try self.pstack.pop() - Memory.Size.cell)
         }
         _ = self.dictionary.define(word: "+") {
             let v2 = try self.pstack.pop()
@@ -169,7 +169,7 @@ class Machine {
             let v1 = try self.pstack.pop()
             try self.pstack.push(v1 - v2)
         }
-        let mult = self.dictionary.define(word: "*") {
+        _ = self.dictionary.define(word: "*") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
             try self.pstack.push(v1 * v2)
@@ -322,13 +322,13 @@ class Machine {
             let address = try self.pstack.pop()
             try self.pstack.push(self.dictionary.tcfa(link: address))
         }
-        _ = self.dictionary.define(word: ">DFA", words: [ docol, tcfa, inc4, exit ])
+        _ = self.dictionary.define(word: ">DFA", words: [ docol, tcfa, inccell, exit ])
         
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
-            self.memory[self.dictionary.latest + 4] ^= Flags.immediate
+            self.memory[self.dictionary.latest + Memory.Size.cell] ^= Flags.immediate
         }
         let hidden = self.dictionary.define(word: "HIDDEN") {
-            self.memory[try self.pstack.pop() + 4] ^= Flags.hidden
+            self.memory[try self.pstack.pop() + Memory.Size.cell] ^= Flags.hidden
         }
         _ = self.dictionary.define(word: "HIDE", words: [ docol, word, find, hidden, exit ])
         
@@ -371,14 +371,14 @@ class Machine {
 
             if link != 0 { // it's in the dictionary
                 let cfa = self.dictionary.tcfa(link: link)
-                if self.state == State.immediate || (self.dictionary.flags(for: link) & Flags.immediate == Flags.immediate) {
+                if self.state == State.immediate || (self.dictionary.flags(of: link) & Flags.immediate == Flags.immediate) {
                     self.nextIp = cfa
                 } else {
                     self.memory.append(cell: cfa)
                 }
             }
 
-            let (result, unconverted) = self.number(text)
+            let (result, unconverted) = self.number(text, base: self.base)
             if unconverted == 0 { // it's a number
                 if self.state == State.immediate {
                     try self.pstack.push(result)
@@ -389,53 +389,19 @@ class Machine {
             }
 
             throw RuntimeError.parseError(name)
-
-
-//            // we change the course of action by directly switching the appropriate instruction in
-//            // the QUIT word. We initialize it with IGNORE, but if we find something to execute immediatly
-//            // we replace IGNORE with whatever needs to be executed
-//
-//            self.dictionary[quitRef].instructions[2] = .word(ignore)
-//
-//            let word = self.word()
-//            let index = self.dictionary.find(word)
-//            //print(" --- INTERPRET read '\(word)' -> \(index)")
-//
-//            if index != -1 { // it's in the dictionary
-//                if self.state == State.immediate || self.dictionary[index].immediate {
-//                    self.dictionary[quitRef].instructions[2] = .word(index)
-//                } else {
-//                    self.dictionary[self.dictionary.latest].instructions.append(.word(index))
-//                }
-//                return
-//            }
-//
-//            if let value = self.number(word) { // it's a number
-//                if self.state == State.immediate {
-//                    self.pstack.push(value)
-//                } else {
-//                    self.dictionary[self.dictionary.latest].instructions.append(.word(lit))
-//                    self.dictionary[self.dictionary.latest].instructions.append(.word(value))
-//                }
-//                return
-//            }
-//
-//            if word != "" {
-//                throw RuntimeError.parseError(word)
-//            }
         }
         let quit = self.dictionary.define(word: "QUIT", words: [ rz, rspstore, interpret, branch, -8 ])
 
 
-        let dot = self.dictionary.define(word: ".") {
+        _ = self.dictionary.define(word: ".") {
             print(try self.pstack.pop())
         }
-        let double = self.dictionary.define(word: "DOUBLE", words: [ docol, lit, 2, mult, exit ])
-        let quad = self.dictionary.define(word: "QUAD", words: [ docol, double, double, exit ])
-        let test = self.dictionary.define(word: "TEST", words: [ lit, 3, quad, dot ])
+//        let double = self.dictionary.define(word: "DOUBLE", words: [ docol, lit, 2, mult, exit ])
+//        let quad = self.dictionary.define(word: "QUAD", words: [ docol, double, double, exit ])
+//        let test = self.dictionary.define(word: "TEST", words: [ lit, 3, quad, dot ])
 
         self.nextIp = quit
-        self.nextIp = test
+        //self.nextIp = test
     }
 
     private func key () -> Byte {
@@ -492,16 +458,30 @@ class Machine {
         let text = Text(address: Address.buffer, length: Byte(bytes.count))
         self.memory[text] = bytes
 
-        return text 
+        return text
     }
 
-    private func number (_ text: Text) -> (Cell, Cell) {
+    private func number (_ text: Text, base: Cell) -> (Cell, Cell) {
 
-        return (0,0)
+        if text.length == 0 {
+            return (0, 0)
+        }
+
+        var lastValue: Cell = 0
+        for index in 1..<text.length {
+            let string = String(ascii: self.memory[Text(address: text.address, length: index)])
+            if let value = Int(string, radix: Int(base)) {
+                lastValue = Cell(value)
+            } else {
+                return (lastValue, Cell(text.length - index))
+            }
+        }
+
+        return (lastValue, 0)
     }
 
     private func next () {
-        self.nextIp += Cell(MemoryLayout<Cell>.size)
+        self.nextIp += Memory.Size.cell
         self.oldIp = self.nextIp
     }
 
@@ -509,25 +489,44 @@ class Machine {
 //        self.memory.dump(from: Address.dictionary, to: Address.dictionary + 256)
 //        print()
         while true {
+
+            self.system.print(self.description, error: true)
+
             do {
                 let word: Cell = self.memory[self.nextIp]
-                if let code = self.dictionary.code(for: word) {
+                if let code = self.dictionary.code(of: word) {
                     try code()
                     self.next()
                 } else {
                     self.nextIp = word
                 }
             } catch {
-//                self.system.print("ERROR: \(error)\n", error: false)
-//                self.buffer = nil
-//                self.nextip = InstructionPointer(word: self.dictionary.find("QUIT"))
+                self.system.print("ERROR: \(error)\n", error: false)
+                self.buffer = nil
+                self.nextIp = self.dictionary.find(byName: "QUIT".ascii)
             }
         }
     }
 
     func interrupt() {
-//        self.system.print("ERROR: \(error)\n", error: false)
-//        self.buffer = nil
-//        self.nextip = InstructionPointer(word: self.dictionary.find("QUIT"))
+        self.buffer = nil
+        self.nextIp = self.dictionary.find(byName: "QUIT".ascii)
     }
 }
+
+extension Machine: CustomStringConvertible {
+    var description: String {
+        var name = String(ascii: self.dictionary.name(of: self.nextIp))
+        if name == "LIT" || name == "BRANCH" || name == "0BRANCH" {
+            let data: Cell = self.memory[self.nextIp + Memory.Size.cell]
+            name += " \(data)"
+        }
+        name = name.padding(toLength: 16, withPad: " ", startingAt: 0)
+        let ip = "\(self.nextIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
+        let pst = "\(self.pstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
+        let rst = "\(self.rstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
+        //let latest = self.dictionary.description(ofWord: self.dictionary.latest)
+        return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst)" //" | LATEST: \(latest)"
+    }
+}
+

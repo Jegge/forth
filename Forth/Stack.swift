@@ -37,7 +37,7 @@ class Stack {
         if self.pointer <= self.address - self.size {
             throw RuntimeError.stackOverflow
         }
-        self.pointer -= Cell(MemoryLayout<Cell>.size)
+        self.pointer -= Memory.Size.cell
         self.memory[self.pointer] = cell
     }
 
@@ -46,7 +46,22 @@ class Stack {
             throw RuntimeError.stackDepleted
         }
         let cell: Cell = self.memory[self.pointer]
-        self.pointer += Cell(MemoryLayout<Cell>.size)
+        self.pointer += Memory.Size.cell
         return cell
+    }
+}
+
+extension Stack: CustomStringConvertible {
+    var description: String {
+        var result = "["
+        for index in stride(from: Int(self.address), to: Int(self.pointer - Memory.Size.cell), by: Int(-Memory.Size.cell)) {
+            let cell: Cell = self.memory[Cell(index)]
+            result += "\(cell), "
+        }
+        if self.address != self.pointer {
+            let cell: Cell = self.memory[self.pointer]
+            result += "\(cell)"
+        }
+        return result + "]"
     }
 }

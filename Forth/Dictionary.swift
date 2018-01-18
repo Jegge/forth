@@ -27,31 +27,34 @@ class Dictionary {
         }
     }
 
-    func code(for word: Cell) -> Code? {
+    func code(of word: Cell) -> Code? {
         return self.code[word]
     }
 
-    func flags(for word: Cell) -> Byte {
-        return self.memory[word + 4] & ~Flags.lenmask
+    func flags(of word: Cell) -> Byte {
+        return self.memory[word + Memory.Size.cell] & ~Flags.lenmask
+    }
+
+    func name(of word: Cell) -> [Byte] {
+        let flags: Byte = self.memory[word + Memory.Size.cell]
+        return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.byte, length: flags & Flags.lenmask)]
     }
 
     func find(byName name: [Byte]) -> Cell {
-
-        var pointer = self.latest
-        while pointer != 0 {
-            let flags: Byte = self.memory[pointer + 4]
-            let label = self.memory[Text(address: pointer + 5, length: flags & Flags.lenmask)]
+        var word = self.latest
+        while word != 0 {
+            let label = self.name(of: word)
             if label == name {
-                return pointer
+                return word
             }
-            pointer = self.memory[pointer]
+            word = self.memory[word]
         }
         return 0
     }
 
     func tcfa(link: Cell) -> Cell {
-        let length = Cell(self.memory[link + 4] & Flags.lenmask)
-        let padding =  Cell(4 - ((length + 1) % 4))
+        let length = Cell(self.memory[link + Memory.Size.cell] & Flags.lenmask)
+        let padding =  Cell(Memory.Size.cell - ((length + 1) % Memory.Size.cell))
         return link + length + padding
     }
 

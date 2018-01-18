@@ -13,9 +13,14 @@ class Memory {
     private let chunk: Cell
     private var data: Data = Data()
 
+    struct Size {
+        static let cell = Cell(MemoryLayout<Cell>.size)
+        static let byte = Cell(MemoryLayout<Byte>.size)
+    }
+
     init (chunk: Cell) {
         self.chunk = chunk
-        self.here = Cell(MemoryLayout<Cell>.size)
+        self.here = Memory.Size.cell
     }
 
     var here: Cell {
@@ -28,7 +33,7 @@ class Memory {
     }
 
     private func growIfNeededToReach(address: Cell) {
-        if address >= self.data.count - (MemoryLayout<Cell>.size + 1) {
+        if address >= Int32(self.data.count) - (Memory.Size.cell + 1) {
             self.data.append(Data(count: Int(self.chunk)))
         }
     }
@@ -86,28 +91,15 @@ class Memory {
             }
         }
     }
-//
-//    func set(bytes: [Byte], at address: Cell) {
-//        for index in 0..<bytes.count {
-//            self.data[index + Int(address)] = bytes[index]
-//        }
-//    }
-//    func get(bytesAt address: Cell, count: Cell) -> [Byte] {
-//        var bytes: [Byte] = []
-//        for index in 0..<count {
-//            bytes.append(self.data[Int(index + address)])
-//        }
-//        return bytes
-//    }
 
     func append(byte: Byte) {
         self[self.here] = byte
-        self.here += Cell(MemoryLayout<Byte>.size)
+        self.here += Memory.Size.byte
     }
 
     func append(cell: Cell) {
         self[self.here] = cell
-        self.here += Cell(MemoryLayout<Cell>.size)
+        self.here += Memory.Size.cell
     }
 
     func append(bytes: [Byte]) {
@@ -115,7 +107,7 @@ class Memory {
     }
 
     func align () {
-        while here % Cell(MemoryLayout<Cell>.size) != 0 {
+        while here % Memory.Size.cell != 0 {
             self.append(byte: 0)
         }
     }
