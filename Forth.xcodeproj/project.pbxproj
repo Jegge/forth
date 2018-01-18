@@ -36,7 +36,7 @@
 		D21E55A52010104A00C91CCE /* Dictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dictionary.swift; sourceTree = "<group>"; };
 		D21E55A72010145E00C91CCE /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		D21E55A92010213700C91CCE /* System.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = System.swift; sourceTree = "<group>"; };
-		D21E55AB2010218700C91CCE /* bootstrap.f */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.fortran; path = bootstrap.f; sourceTree = "<group>"; };
+		D21E55AB2010218700C91CCE /* bootstrap.f */ = {isa = PBXFileReference; explicitFileType = text; fileEncoding = 4; path = bootstrap.f; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		D25E6905200C887F000059EB /* Forth */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Forth; sourceTree = BUILT_PRODUCTS_DIR; };
 		D25E6908200C887F000059EB /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		D25E690F200C88C8000059EB /* Machine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Machine.swift; sourceTree = "<group>"; };

@@ -48,6 +48,7 @@ extension Character {
     static let space: Byte = 32
     static let newline: Byte = 10
     static let backslash: Byte = 92
+    static let dash: Byte = 45
 }
 
 struct Constants {

@@ -107,12 +107,6 @@ class Memory {
         bytes.forEach { self.append(byte: $0) }
     }
 
-    func align () {
-        while here % Memory.Size.cell != 0 {
-            self.append(byte: 0)
-        }
-    }
-
     func dump (from: Cell, to: Cell) {
         var address: Cell = from
         let count = 16

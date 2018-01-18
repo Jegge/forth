@@ -268,28 +268,30 @@ class Machine {
             try self.pstack.push(Cell(self.key()))
         }
         let word = self.dictionary.define(word: "WORD") {
-            let text = self.word()
+            let bytes = self.word()
+            let text = Text(address: Address.buffer, length: Byte(bytes.count))
+            self.memory[text] = bytes
+//            print(" --- WORD: \(String(ascii: bytes))")
             try self.pstack.push(text.address)
             try self.pstack.push(Cell(text.length))
         }
         _ = self.dictionary.define(word: "NUMBER") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
-            let (value, unconverted) = self.number(Text(address: address, length: Byte(length)), base: self.base)
+            let text = self.memory[Text(address: address, length: Byte(length))]
+            let (value, unconverted) = self.number(text, base: self.base)
             try self.pstack.push(value)
             try self.pstack.push(unconverted)
         }
         _ = self.dictionary.define(word: "CHAR") {
-            let text = self.word()
-            if text.length < 1 {
-                throw RuntimeError.expectedWord
-            }
-            try self.pstack.push(self.memory[text.address])
+            try self.pstack.push(Cell(self.word().first ?? 0))
         }
         let find = self.dictionary.define(word: "FIND") {
-            let text = self.word()
-            let name = self.memory[text]
+            let length = try self.pstack.pop()
+            let address = try self.pstack.pop()
+            let name = self.memory[Text(address: address, length: Byte(length))]
             let link = self.dictionary.find(byName: name)
+//            print(" --- FIND: \(String(ascii: name)) -> \(link)")
             try self.pstack.push(link)
         }
         let toimmediate = self.dictionary.define(word: "[", immediate: true) {
@@ -331,7 +333,7 @@ class Machine {
         }
         let tcfa = self.dictionary.define(word: ">CFA") {
             let address = try self.pstack.pop()
-            try self.pstack.push(self.dictionary.tcfa(link: address))
+            try self.pstack.push(self.dictionary.tcfa(word: address))
         }
         _ = self.dictionary.define(word: ">DFA", words: [ docol, tcfa, inccell, exit ])
 
@@ -365,32 +367,39 @@ class Machine {
             let word: Cell = self.memory[self.nextIp]
             try self.pstack.push(word)
         }
+        _ = self.dictionary.define(word: "SEE") {
+            let word = try self.pstack.pop()
+            self.system.print(self.dictionary.decompile(word: word) + "\n", error: false)
+        }
         let comma = self.dictionary.define(word: ",") {
             self.memory.append(cell: try self.pstack.pop())
         }
-
         _ = self.dictionary.define(word: ":", words: [ docol, word, create, lit, docol, comma, latest, fetch, hidden, tocompile, exit ])
-        _ = self.dictionary.define(word: ";", immediate: true, words: [ docol, lit, exit, comma, latest, fetch, hidden, toimmediate, exit ])
+        _ = self.dictionary.define(word: ";", immediate: true, words: [ docol, lit, exit, comma, lit, Dictionary.marker, comma, latest, fetch, hidden, toimmediate, exit ])
 
         let interpret = self.dictionary.define(word: "INTERPRET") {
 
             self.memory[self.execAddress] = self.ignore
+            let name = self.word()
+            if name.count == 0 {
+                return
+            }
 
-            let text = self.word()
-            let name = self.memory[text]
             let link = self.dictionary.find(byName: name)
+            //print(" --- INTERPRETER READ: '\(String(ascii: name))'")
 
             if link != 0 { // it's in the dictionary
-                let cfa = self.dictionary.tcfa(link: link)
+                let cfa = self.dictionary.tcfa(word: link)
                 if self.state == State.immediate || (self.dictionary.flags(of: link) & Flags.immediate == Flags.immediate) {
                     self.memory[self.execAddress] = cfa
+                    //print(" --- INTERPRETER NEXT: '\(String(ascii: self.dictionary.name(of: self.dictionary.link(before: cfa))))'")
                 } else {
                     self.memory.append(cell: cfa)
                 }
                 return
             }
 
-            let (result, unconverted) = self.number(text, base: self.base)
+            let (result, unconverted) = self.number(name, base: self.base)
             if unconverted == 0 { // it's a number
                 if self.state == State.immediate {
                     try self.pstack.push(result)
@@ -403,10 +412,10 @@ class Machine {
 
             throw RuntimeError.parseError(name)
         }
-
-        _ = self.dictionary.define(word: ".") {
-            print(try self.pstack.pop())
-        }
+//
+//        _ = self.dictionary.define(word: ".") {
+//            print(try self.pstack.pop())
+//        }
 
         self.ignore = self.dictionary.define(word: "IGNORE") {
             // intentionally left blank
@@ -441,7 +450,7 @@ class Machine {
         }
     }
 
-    private func word () -> Text {
+    private func word () -> [Byte] {
         var buffer: [Byte] = []
         var character: Byte = 0
 
@@ -462,36 +471,38 @@ class Machine {
 
         // read word until space or newline or comment
         while character != Character.space &&
-              character != Character.newline &&
-              character != Character.backslash {
-            buffer.append(character)
-            character = self.key()
+            character != Character.newline {
+                buffer.append(character)
+                character = self.key()
         }
 
-        let bytes = Array(buffer[0..<min(Constants.wordlen, buffer.count)])
-        let text = Text(address: Address.buffer, length: Byte(bytes.count))
-        self.memory[text] = bytes
-
-        return text
+        return Array(buffer[0..<min(Constants.wordlen, buffer.count)])
     }
 
-    private func number (_ text: Text, base: Cell) -> (Cell, Cell) {
+    private func number (_ bytes: [Byte], base: Cell) -> (Cell, Cell) {
 
-        if text.length == 0 {
+        if bytes.count == 0 {
             return (0, 0)
         }
 
+        var sign: Cell = 1
+        var rest: [Byte] = bytes
+        if bytes.first == Character.dash {
+            sign = -1
+            rest = Array(bytes.dropFirst())
+        }
+
         var lastValue: Cell = 0
-        for index in 1...text.length {
-            let string = String(ascii: self.memory[Text(address: text.address, length: index)])
+        for index in stride(from: rest.count - 1, through: 0, by: -1) {
+            let string = String(ascii: Array(rest.dropLast(index)))
             if let value = Int(string, radix: Int(base)) {
                 lastValue = Cell(value)
             } else {
-                return (lastValue, Cell(text.length - index))
+                return (lastValue * sign, Cell(index + 1))
             }
         }
 
-        return (lastValue, 0)
+        return (lastValue * sign, 0)
     }
 
     private func next () {
@@ -529,7 +540,7 @@ class Machine {
 
 extension Machine: CustomStringConvertible {
     var description: String {
-        let word: Cell = self.dictionary.link(for: self.memory[self.nextIp])
+        let word: Cell = self.dictionary.word(having: self.memory[self.nextIp])
         var name = String(ascii: self.dictionary.name(of: word))
         if name == "LIT" || name == "BRANCH" || name == "0BRANCH" {
             let data: Cell = self.memory[self.nextIp + Memory.Size.cell]

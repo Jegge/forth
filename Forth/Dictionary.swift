@@ -10,6 +10,8 @@ import Foundation
 
 class Dictionary {
 
+    static let marker: Cell = -1
+
     private let memory: Memory
     private var code: [Cell: Code] = [:]
 
@@ -40,7 +42,7 @@ class Dictionary {
         return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.byte, length: flags & Flags.lenmask)]
     }
 
-    func link(for address: Cell) -> Cell {
+    func word(having address: Cell) -> Cell {
         // get the latest just before address
         var word = self.latest
         while word != 0 {
@@ -52,11 +54,22 @@ class Dictionary {
         return 0
     }
 
+    func word(after word: Cell) -> Cell {
+        var pointer = self.latest
+        while pointer != 0 {
+            if self.memory[pointer] == word {
+                return pointer
+            }
+            pointer = self.memory[pointer]
+        }
+        return 0
+    }
+
     func find(byName name: [Byte]) -> Cell {
         var word = self.latest
         while word != 0 {
             let label = self.name(of: word)
-            if label == name {
+            if label == name && (flags(of: word) & Flags.hidden) != Flags.hidden {
                 return word
             }
             word = self.memory[word]
@@ -64,31 +77,60 @@ class Dictionary {
         return 0
     }
 
-    func words() -> [String] {
-        var list: [String] = []
-        var word = self.latest
-        while word != 0 {
-            list.append(String(ascii: self.name(of: word)))
-            word = self.memory[word]
+    func decompile(word: Cell) -> String {
+        let immediate = (self.flags(of: word) & Flags.immediate) == Flags.immediate
+        var result = "\(String(ascii: self.name(of: word))) \( (immediate ? "IMMEDIATE " : ""))"
+
+        var address = self.tcfa(word: word)
+        if let _ = self.code(of: address) {
+            return result + "<native> ;"
         }
-        return list
+        while true {
+            let word = self.memory[address] as Cell
+            if word == Dictionary.marker {
+                return result
+            }
+            let name = String(ascii: self.name(of: self.word(having: word)))
+            switch name {
+            case ":":
+                // prepend docol if existing
+                result = ": " + result
+            case "'":
+                // print the following instruction as a name
+                address += Memory.Size.cell
+                result += "\(name) \(String(ascii: self.name(of: self.word(having: self.memory[address])))) "
+            case "LIT", "BRANCH", "0BRANCH":
+                // print the following instruction as a number
+                address += Memory.Size.cell
+                result += "\(name) \(self.memory[address] as Cell) "
+            default:
+                result += "\(name) "
+            }
+            address += Memory.Size.cell
+        }
     }
 
-    func tcfa(link: Cell) -> Cell {
-        let length = Cell(self.memory[link + Memory.Size.cell] & Flags.lenmask)
-        let padding =  Cell(Memory.Size.cell - ((length + Memory.Size.byte) % Memory.Size.cell))
-        return link + Memory.Size.cell + Memory.Size.byte + length + padding
+//    func words() -> [String] {
+//        var list: [String] = []
+//        var word = self.latest
+//        while word != 0 {
+//            list.append(String(ascii: self.name(of: word)))
+//            word = self.memory[word]
+//        }
+//        return list
+//    }
+
+    func tcfa(word: Cell) -> Cell {
+        let length = Cell(self.memory[word + Memory.Size.cell] & Flags.lenmask)
+        return word + Memory.Size.cell + Memory.Size.byte + length
     }
 
     func create(word name: [Byte], immediate: Bool) -> Cell {
-        self.memory.align()
-
         let link = self.memory.here
 
         self.memory.append(cell: self.latest)
         self.memory.append(byte: (Byte(name.count) & Flags.lenmask) | (immediate ? Flags.immediate : Flags.none))
         self.memory.append(bytes: name)
-        self.memory.align()
 
         self.latest = link
         return self.memory.here
@@ -99,7 +141,6 @@ class Dictionary {
     }
 
     func define(word name: String, immediate: Bool = false, code: @escaping Code) -> Cell {
-
         let here = self.create(word: name, immediate: immediate)
         self.code[here] = code
         return here
@@ -111,6 +152,7 @@ class Dictionary {
         words.forEach {
             self.memory.append(cell: $0)
         }
+        self.memory.append(cell: Dictionary.marker)
         return here
     }
 
