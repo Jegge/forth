@@ -11,15 +11,15 @@ import Darwin
 
 var lines: [String] = []
 
-//do {
-//    lines = try String(contentsOf: URL(fileURLWithPath: "./bootstrap.f"))
-//        .components(separatedBy: .newlines)
-//        .filter { !$0.isEmpty }
-//} catch {
-//    print()
-//    print("FATAL ERROR: \(error)")
-//    exit(0)
-//}
+do {
+    lines = try String(contentsOf: URL(fileURLWithPath: "./bootstrap.f"))
+        .components(separatedBy: .newlines)
+        .filter { !$0.isEmpty }
+} catch {
+    print()
+    print("FATAL ERROR: \(error)")
+    exit(0)
+}
 
 let machine = Machine(system: System(lines: lines))
 

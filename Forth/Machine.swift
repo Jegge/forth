@@ -67,7 +67,7 @@ class Machine {
         _ = self.dictionary.define(variable: "S0", address: Address.s0, stack: self.pstack)
 
         _ = self.dictionary.define(constant: "VERSION", value: Constants.version, stack: self.pstack)
-        let rz = self.dictionary.define(constant: "R0", value: Address.r0, stack: self.pstack)
+        let rz = self.dictionary.define(constant: "R0", value: Address.rstack, stack: self.pstack)
         _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Flags.immediate), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Flags.hidden), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_LENMASK", value: Cell(Flags.lenmask), stack: self.pstack)
@@ -511,14 +511,14 @@ class Machine {
             } catch {
                 self.system.print("ERROR: \(error)\n", error: false)
                 self.buffer = nil
-                self.nextIp = self.dictionary.tcfa(link: self.dictionary.find(byName: "QUIT".ascii))
+                self.nextIp = self.quit
             }
         }
     }
 
     func interrupt() {
         self.buffer = nil
-        self.nextIp = self.dictionary.tcfa(link: self.dictionary.find(byName: "QUIT".ascii))
+        self.nextIp = self.quit
     }
 }
 

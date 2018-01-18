@@ -44,7 +44,7 @@ class System: SystemProvided {
     }
     func readLine () -> String? {
         if self.lines.count > 0 {
-            return self.lines.removeFirst()
+            return self.lines.removeFirst() + "\n"
         }
         return Swift.readLine(strippingNewline: false)
     }
