@@ -272,6 +272,13 @@ class Machine {
             try self.pstack.push(text.address)
             try self.pstack.push(Cell(text.length))
         }
+        _ = self.dictionary.define(word: "NUMBER") {
+            let length = try self.pstack.pop()
+            let address = try self.pstack.pop()
+            let (value, unconverted) = self.number(Text(address: address, length: Byte(length)), base: self.base)
+            try self.pstack.push(value)
+            try self.pstack.push(unconverted)
+        }
         _ = self.dictionary.define(word: "CHAR") {
             let text = self.word()
             if text.length < 1 {
@@ -296,7 +303,7 @@ class Machine {
             let value = try self.pstack.pop()
             self.memory[address] = value
         }
-        _ = self.dictionary.define(word: "@") {
+        let fetch = self.dictionary.define(word: "@") {
             let address = try self.pstack.pop()
             let cell: Cell = self.memory[address]
             try self.pstack.push(cell)
@@ -361,11 +368,9 @@ class Machine {
         let comma = self.dictionary.define(word: ",") {
             self.memory.append(cell: try self.pstack.pop())
         }
-        _ = self.dictionary.define(word: "NUMBER") {
-            // TODO
-        }
-        _ = self.dictionary.define(word: ":", words: [ docol, word, create, lit, docol, comma, latest, hidden, tocompile, exit ])
-        _ = self.dictionary.define(word: ";", immediate: true, words: [ docol, lit, exit, comma, latest, hidden, toimmediate, exit ])
+
+        _ = self.dictionary.define(word: ":", words: [ docol, word, create, lit, docol, comma, latest, fetch, hidden, tocompile, exit ])
+        _ = self.dictionary.define(word: ";", immediate: true, words: [ docol, lit, exit, comma, latest, fetch, hidden, toimmediate, exit ])
 
         let interpret = self.dictionary.define(word: "INTERPRET") {
 
