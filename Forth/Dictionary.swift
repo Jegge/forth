@@ -40,6 +40,18 @@ class Dictionary {
         return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.byte, length: flags & Flags.lenmask)]
     }
 
+    func link(for address: Cell) -> Cell {
+        // get the latest just before address
+        var word = self.latest
+        while word != 0 {
+            if word < address {
+                return word
+            }
+            word = self.memory[word]
+        }
+        return 0
+    }
+
     func find(byName name: [Byte]) -> Cell {
         var word = self.latest
         while word != 0 {
@@ -52,10 +64,20 @@ class Dictionary {
         return 0
     }
 
+    func words() -> [String] {
+        var list: [String] = []
+        var word = self.latest
+        while word != 0 {
+            list.append(String(ascii: self.name(of: word)))
+            word = self.memory[word]
+        }
+        return list
+    }
+
     func tcfa(link: Cell) -> Cell {
         let length = Cell(self.memory[link + Memory.Size.cell] & Flags.lenmask)
-        let padding =  Cell(Memory.Size.cell - ((length + 1) % Memory.Size.cell))
-        return link + length + padding
+        let padding =  Cell(Memory.Size.cell - ((length + Memory.Size.byte) % Memory.Size.cell))
+        return link + Memory.Size.cell + Memory.Size.byte + length + padding
     }
 
     func create(word name: [Byte], immediate: Bool) -> Cell {
@@ -97,6 +119,9 @@ class Dictionary {
         var location: Cell
         if let address = address {
             location = address
+            if let value = value {
+                self.memory[location] = value
+            }
         } else {
             location = self.memory.here
             if let value = value {

@@ -13,5 +13,19 @@ enum RuntimeError: Error {
     case stackOverflow
     case expectedWord
     case parseError(_:[Byte])
-    case invalidAddress(_: Cell)
+}
+
+extension RuntimeError: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .stackDepleted:
+            return "Expected an element on the stack, but the stack was empty."
+        case .stackOverflow:
+            return "Tried to put an element on the stack, but the stack was full."
+        case .expectedWord:
+            return "Expected to read a word."
+        case .parseError(let token):
+            return "Parse error: \(String(ascii: token)) is neither a known word nor a number literal."
+        }
+    }
 }

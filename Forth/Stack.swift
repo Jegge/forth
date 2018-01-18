@@ -27,9 +27,9 @@ class Stack {
 
     init(memory: Memory, address: Cell, size: Cell, addressAddress: Cell) {
         self.memory = memory
+        self.size = size
         self.addressAddress = addressAddress
         self.pointer = address
-        self.size = size
         self.address = address
     }
 
@@ -53,15 +53,20 @@ class Stack {
 
 extension Stack: CustomStringConvertible {
     var description: String {
-        var result = "["
-        for index in stride(from: Int(self.address), to: Int(self.pointer - Memory.Size.cell), by: Int(-Memory.Size.cell)) {
+
+        if self.address == self.pointer {
+            return "[]"
+        }
+
+        var result = "[ "
+        for index in stride(from: Int(self.address - Memory.Size.cell), to: Int(self.pointer), by: Int(-Memory.Size.cell)) {
             let cell: Cell = self.memory[Cell(index)]
             result += "\(cell), "
         }
-        if self.address != self.pointer {
-            let cell: Cell = self.memory[self.pointer]
-            result += "\(cell)"
-        }
-        return result + "]"
+
+        let cell: Cell = self.memory[self.pointer]
+        result += "\(cell) ]"
+
+        return result
     }
 }

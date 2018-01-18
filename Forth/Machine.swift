@@ -20,6 +20,10 @@ class Machine {
     private var oldIp: Cell = 0  // current / previous instruction pointer
     private var nextIp: Cell = 0  // next instruction pointer
 
+    private var quit: Cell = 0
+    private var ignore: Cell = 0
+    private var execAddress: Cell = 0
+
     var state: Cell {
         set {
             self.memory[Address.state] = newValue
@@ -50,8 +54,8 @@ class Machine {
     init (system: SystemProvided, chunk: Cell = 4096) {
         self.system = system
         self.memory = Memory(chunk: chunk)
-        self.pstack = Stack(memory: self.memory, address: Address.pstack, size: 512, addressAddress: Address.s0)
         self.rstack = Stack(memory: self.memory, address: Address.rstack, size: 256, addressAddress: Address.r0)
+        self.pstack = Stack(memory: self.memory, address: Address.pstack, size: 512, addressAddress: Address.s0)
         self.memory.here = Address.dictionary
         self.dictionary = Dictionary(memory: self.memory)
 
@@ -323,7 +327,7 @@ class Machine {
             try self.pstack.push(self.dictionary.tcfa(link: address))
         }
         _ = self.dictionary.define(word: ">DFA", words: [ docol, tcfa, inccell, exit ])
-        
+
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
             self.memory[self.dictionary.latest + Memory.Size.cell] ^= Flags.immediate
         }
@@ -339,18 +343,18 @@ class Machine {
             _ = self.dictionary.create(word: name, immediate: false)
         }
         let branch = self.dictionary.define(word: "BRANCH") {
-            self.nextIp += 1
-            self.nextIp += self.memory[self.nextIp]
+            self.nextIp += self.memory[self.nextIp + Memory.Size.cell]
         }
         _ = self.dictionary.define(word: "0BRANCH") {
-            self.nextIp += 1
-            let offset: Cell = self.memory[self.nextIp]
+            let offset: Cell = self.memory[self.nextIp + Memory.Size.cell]
             if  try self.pstack.pop() == 0 {
                 self.nextIp += offset
+            } else {
+                self.nextIp += Memory.Size.cell
             }
         }
         _ = self.dictionary.define(word: "'") {
-            self.nextIp += 1
+            self.nextIp += Memory.Size.cell
             let word: Cell = self.memory[self.nextIp]
             try self.pstack.push(word)
         }
@@ -365,6 +369,8 @@ class Machine {
 
         let interpret = self.dictionary.define(word: "INTERPRET") {
 
+            self.memory[self.execAddress] = self.ignore
+
             let text = self.word()
             let name = self.memory[text]
             let link = self.dictionary.find(byName: name)
@@ -372,10 +378,11 @@ class Machine {
             if link != 0 { // it's in the dictionary
                 let cfa = self.dictionary.tcfa(link: link)
                 if self.state == State.immediate || (self.dictionary.flags(of: link) & Flags.immediate == Flags.immediate) {
-                    self.nextIp = cfa
+                    self.memory[self.execAddress] = cfa
                 } else {
                     self.memory.append(cell: cfa)
                 }
+                return
             }
 
             let (result, unconverted) = self.number(text, base: self.base)
@@ -386,22 +393,24 @@ class Machine {
                     self.memory.append(cell: lit)
                     self.memory.append(cell: result)
                 }
+                return
             }
 
             throw RuntimeError.parseError(name)
         }
-        let quit = self.dictionary.define(word: "QUIT", words: [ rz, rspstore, interpret, branch, -8 ])
-
 
         _ = self.dictionary.define(word: ".") {
             print(try self.pstack.pop())
         }
-//        let double = self.dictionary.define(word: "DOUBLE", words: [ docol, lit, 2, mult, exit ])
-//        let quad = self.dictionary.define(word: "QUAD", words: [ docol, double, double, exit ])
-//        let test = self.dictionary.define(word: "TEST", words: [ lit, 3, quad, dot ])
 
+        self.ignore = self.dictionary.define(word: "IGNORE") {
+            // intentionally left blank
+        }
+
+        self.quit = self.dictionary.define(word: "QUIT", words: [ rz, rspstore, interpret, ignore, branch, Memory.Size.cell * -3 ])
+
+        self.execAddress = self.quit + Memory.Size.cell * 3
         self.nextIp = quit
-        //self.nextIp = test
     }
 
     private func key () -> Byte {
@@ -454,7 +463,7 @@ class Machine {
             character = self.key()
         }
 
-        let bytes = Array(buffer[0..<Constants.wordlen])
+        let bytes = Array(buffer[0..<min(Constants.wordlen, buffer.count)])
         let text = Text(address: Address.buffer, length: Byte(bytes.count))
         self.memory[text] = bytes
 
@@ -468,7 +477,7 @@ class Machine {
         }
 
         var lastValue: Cell = 0
-        for index in 1..<text.length {
+        for index in 1...text.length {
             let string = String(ascii: self.memory[Text(address: text.address, length: index)])
             if let value = Int(string, radix: Int(base)) {
                 lastValue = Cell(value)
@@ -486,13 +495,12 @@ class Machine {
     }
 
     func run() {
-//        self.memory.dump(from: Address.dictionary, to: Address.dictionary + 256)
-//        print()
         while true {
-
-            self.system.print(self.description, error: true)
-
             do {
+                if self.trace > 0 {
+                    self.system.print(self.description + "\n", error: true)
+                }
+
                 let word: Cell = self.memory[self.nextIp]
                 if let code = self.dictionary.code(of: word) {
                     try code()
@@ -503,20 +511,21 @@ class Machine {
             } catch {
                 self.system.print("ERROR: \(error)\n", error: false)
                 self.buffer = nil
-                self.nextIp = self.dictionary.find(byName: "QUIT".ascii)
+                self.nextIp = self.dictionary.tcfa(link: self.dictionary.find(byName: "QUIT".ascii))
             }
         }
     }
 
     func interrupt() {
         self.buffer = nil
-        self.nextIp = self.dictionary.find(byName: "QUIT".ascii)
+        self.nextIp = self.dictionary.tcfa(link: self.dictionary.find(byName: "QUIT".ascii))
     }
 }
 
 extension Machine: CustomStringConvertible {
     var description: String {
-        var name = String(ascii: self.dictionary.name(of: self.nextIp))
+        let word: Cell = self.dictionary.link(for: self.memory[self.nextIp])
+        var name = String(ascii: self.dictionary.name(of: word))
         if name == "LIT" || name == "BRANCH" || name == "0BRANCH" {
             let data: Cell = self.memory[self.nextIp + Memory.Size.cell]
             name += " \(data)"

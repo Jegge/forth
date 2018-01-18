@@ -8,6 +8,7 @@
 
 import Foundation
 
+// p self.memory.dump(from: Address.dictionary, to: Address.dictionary + self.latest + 32)
 class Memory {
 
     private let chunk: Cell
