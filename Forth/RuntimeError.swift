@@ -13,6 +13,7 @@ enum RuntimeError: Error {
     case stackOverflow
     case expectedWord
     case parseError(_:[Byte])
+    case seeUnknownWord
 }
 
 extension RuntimeError: CustomStringConvertible {
@@ -26,6 +27,8 @@ extension RuntimeError: CustomStringConvertible {
             return "Expected to read a word."
         case .parseError(let token):
             return "Parse error: \(String(ascii: token)) is neither a known word nor a number literal."
+        case .seeUnknownWord:
+            return "Can not decompile an unknown word."
         }
     }
 }

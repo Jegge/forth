@@ -51,7 +51,7 @@ class Machine {
         }
     }
 
-    init (system: SystemProvided, chunk: Cell = 4096) {
+    init (system: SystemProvided, chunk: Cell = 4096 * 4) {
         self.system = system
         self.memory = Memory(chunk: chunk)
         self.rstack = Stack(memory: self.memory, address: Address.rstack, size: 256, addressAddress: Address.r0)
@@ -71,19 +71,28 @@ class Machine {
         _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Flags.immediate), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Flags.hidden), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_LENMASK", value: Cell(Flags.lenmask), stack: self.pstack)
+        _ = self.dictionary.define(constant: "MARKER", value: Dictionary.marker, stack: self.pstack)
 
-        let docol = self.dictionary.define(word: ":") {
+        let docol = self.dictionary.define(word: "DOCOL") {
             try self.rstack.push(self.oldIp)
         }
 
         _ = self.dictionary.define(constant: "DOCOL", value: docol, stack: self.pstack)
 
-        let exit = self.dictionary.define(word: ";") {
+        let exit = self.dictionary.define(word: "EXIT") {
             self.nextIp = try self.rstack.pop()
         }
         let lit = self.dictionary.define(word: "LIT") {
             self.next()
             try self.pstack.push(self.memory[self.nextIp])
+        }
+        _ = self.dictionary.define(word: "LITSTRING") {
+            self.next()
+            let length = self.memory[self.nextIp] as Cell
+            try self.pstack.push(self.nextIp)
+            try self.pstack.push(length)
+            self.nextIp += length
+            self.next()
         }
         _ = self.dictionary.define(word: "DROP") {
             _ = try self.pstack.pop()
@@ -264,6 +273,12 @@ class Machine {
             let character = try self.pstack.pop()
             self.system.print(String(format:"%c", character), error: false)
         }
+        _ = self.dictionary.define(word: "TELL") {
+            let length = try self.pstack.pop()
+            let address = try self.pstack.pop()
+            let text = self.memory[Text(address: address, length: Byte(length))]
+            self.system.print(String(ascii: text), error: false)
+        }
         _ = self.dictionary.define(word: "KEY") {
             try self.pstack.push(Cell(self.key()))
         }
@@ -307,8 +322,28 @@ class Machine {
         }
         let fetch = self.dictionary.define(word: "@") {
             let address = try self.pstack.pop()
-            let cell: Cell = self.memory[address]
+            let cell = self.memory[address] as Cell
             try self.pstack.push(cell)
+        }
+        _ = self.dictionary.define(word: "C!") {
+            let address = try self.pstack.pop()
+            let value = try self.pstack.pop()
+            self.memory[address] = Byte(value)
+        }
+        _ = self.dictionary.define(word: "C@") {
+            let address = try self.pstack.pop()
+            let cell = self.memory[address] as Byte
+            try self.pstack.push(Cell(cell))
+        }
+        _ = self.dictionary.define(word: "+!") {
+            let address = try self.pstack.pop()
+            let value = try self.pstack.pop()
+            self.memory[address] += value
+        }
+        _ = self.dictionary.define(word: "-!") {
+            let address = try self.pstack.pop()
+            let value = try self.pstack.pop()
+            self.memory[address] -= value
         }
         _ = self.dictionary.define(word: ">R") {
             try self.rstack.push(try self.pstack.pop())
@@ -369,8 +404,20 @@ class Machine {
         }
         _ = self.dictionary.define(word: "SEE") {
             let word = try self.pstack.pop()
+            if word == 0 {
+                throw RuntimeError.seeUnknownWord
+            }
             self.system.print(self.dictionary.decompile(word: word) + "\n", error: false)
         }
+        _ = self.dictionary.define(word: "WORDS") {
+            self.system.print(self.dictionary.words().joined(separator: " ") + "\n", error: false)
+        }
+        _ = self.dictionary.define(word: "DUMP") {
+            let length = try self.pstack.pop()
+            let address = try self.pstack.pop()
+            self.system.print(self.memory.dump(address: address, length: length) + "\n", error: false)
+        }
+
         let comma = self.dictionary.define(word: ",") {
             self.memory.append(cell: try self.pstack.pop())
         }

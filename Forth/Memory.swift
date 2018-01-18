@@ -41,9 +41,10 @@ class Memory {
 
     subscript (address: Cell) -> Cell {
         get {
-            if address < 0 || address > self.data.count - 1 {
+            if address < 0 {
                 return 0
             }
+            self.growIfNeededToReach(address: address + Memory.Size.cell)
             let a = Cell(self.data[Int(address + 0)]) << 24
             let b = Cell(self.data[Int(address + 1)]) << 16
             let c = Cell(self.data[Int(address + 2)]) << 8
@@ -54,7 +55,8 @@ class Memory {
             if address < 0 {
                 return
             }
-            self.growIfNeededToReach(address: address)
+            self.growIfNeededToReach(address: address + Memory.Size.cell)
+
             self.data[Int(address + 0)] = Byte((newValue >> 24) & 0x000000FF)
             self.data[Int(address + 1)] = Byte((newValue >> 16) & 0x000000FF)
             self.data[Int(address + 2)] = Byte((newValue >> 8) & 0x000000FF)
@@ -64,22 +66,30 @@ class Memory {
 
     subscript (address: Cell) -> Byte {
         get {
-            if address < 0 || address > self.data.count - 1 {
+            if address < 0 {
                 return 0
             }
-           return self.data[Int(address)]
+            self.growIfNeededToReach(address: address + Memory.Size.byte)
+
+            return self.data[Int(address)]
         }
         set {
             if address < 0 {
                 return
             }
-            self.growIfNeededToReach(address: address)
+            self.growIfNeededToReach(address: address + Memory.Size.byte)
+
             self.data[Int(address)] = newValue
         }
     }
 
     subscript (text: Text) -> [Byte] {
         get {
+            if text.address < 0 {
+                return []
+            }
+            self.growIfNeededToReach(address: text.address + (Cell(text.length) * Memory.Size.byte))
+
             var bytes: [Byte] = []
             for index in 0..<Int(text.length) {
                 bytes.append(self.data[index + Int(text.address)])
@@ -87,6 +97,11 @@ class Memory {
             return bytes
         }
         set {
+            if text.address < 0 {
+                return
+            }
+            self.growIfNeededToReach(address: text.address + (Cell(text.length) * Memory.Size.byte))
+
             for index in 0..<Int(text.length) {
                 self.data[index + Int(text.address)] = newValue[index]
             }
@@ -107,33 +122,57 @@ class Memory {
         bytes.forEach { self.append(byte: $0) }
     }
 
-    func dump (from: Cell, to: Cell) {
-        var address: Cell = from
-        let count = 16
-        print("       ", separator: "", terminator: "")
-        for index in (0..<count) {
-            print(String(format: "| %3d   ", index), separator: "", terminator: "")
-        }
-        print()
-        print("---------", separator: "", terminator: "")
-        for _ in (0..<count) {
-            print("--------", separator: "", terminator: "")
-        }
-        print()
+    func dump (address: Cell, length: Cell) -> String {
+        var result = ""
+        var index = address
+        while index < address + length {
 
-        while address < to {
-            print(String(format: "% 6d ", address), separator: "", terminator: "")
-            for index in (0..<count) {
-                let b: Byte = self[address + Cell(index)]
-                print(String(format: "| %3d ", b), separator: "", terminator: "")
-                if b > 31 && b < 127 {
-                    print(String(format: "%c ", b), separator: "", terminator: "")
+            result += String(format: "% 8X", index)
+            for i in 0..<16 {
+                result += String(format: "% 3X", self[Cell(index) + Cell(i)] as Byte)
+            }
+            for i in 0..<16 {
+                let character = self[Cell(index) + Cell(i)] as Byte
+                if character >= Character.space && character < Character.delete {
+                    result += String(format: "%c", character)
                 } else {
-                    print("  ", separator: "", terminator: "")
+                    result += "."
                 }
             }
-            print()
-            address += Cell(count)
+            index += 16
+            result += "\n"
         }
+        return result
     }
- }
+
+//    func dump (from: Cell, to: Cell) {
+//        var address: Cell = from
+//        let count = 16
+//        print("       ", separator: "", terminator: "")
+//        for index in (0..<count) {
+//            print(String(format: "| %3d   ", index), separator: "", terminator: "")
+//        }
+//        print()
+//        print("---------", separator: "", terminator: "")
+//        for _ in (0..<count) {
+//            print("--------", separator: "", terminator: "")
+//        }
+//        print()
+//
+//        while address < to {
+//            print(String(format: "% 6d ", address), separator: "", terminator: "")
+//            for index in (0..<count) {
+//                let b: Byte = self[address + Cell(index)]
+//                print(String(format: "| %3d ", b), separator: "", terminator: "")
+//                if b > 31 && b < 127 {
+//                    print(String(format: "%c ", b), separator: "", terminator: "")
+//                } else {
+//                    print("  ", separator: "", terminator: "")
+//                }
+//            }
+//            print()
+//            address += Cell(count)
+//        }
+//    }
+}
+

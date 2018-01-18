@@ -10,7 +10,7 @@ import Foundation
 
 class Dictionary {
 
-    static let marker: Cell = -1
+    static let marker: Cell = Int32(bitPattern: UInt32.max)
 
     private let memory: Memory
     private var code: [Cell: Code] = [:]
@@ -103,6 +103,13 @@ class Dictionary {
                 // print the following instruction as a number
                 address += Memory.Size.cell
                 result += "\(name) \(self.memory[address] as Cell) "
+            case "EXIT":
+                // write the last exit as ;
+                if self.memory[address + Memory.Size.cell] != Dictionary.marker {
+                    result += "\(name) "
+                } else {
+                    result += ";"
+                }
             default:
                 result += "\(name) "
             }
@@ -110,15 +117,17 @@ class Dictionary {
         }
     }
 
-//    func words() -> [String] {
-//        var list: [String] = []
-//        var word = self.latest
-//        while word != 0 {
-//            list.append(String(ascii: self.name(of: word)))
-//            word = self.memory[word]
-//        }
-//        return list
-//    }
+    func words () -> [String] {
+        var result = Set<String>()
+        var word = self.latest
+        while word != 0 {
+            if (flags(of: word) & Flags.hidden) != Flags.hidden {
+                result.insert(String(ascii: self.name(of: word)))
+            }
+            word = self.memory[word]
+        }
+        return Array(result).sorted()
+    }
 
     func tcfa(word: Cell) -> Cell {
         let length = Cell(self.memory[word + Memory.Size.cell] & Flags.lenmask)

@@ -371,5 +371,258 @@ and call U.R because we want the sign to be next to the number ('-123' instead o
     C-              ( adjust because S0 was on the stack when we pushed DSP )
 ;
 
+(
+STRINGS ----------------------------------------------------------------------
 
+S" string" is used in FORTH to define strings.  It leaves the address of the string and
+its length on the stack, (length at the top of stack).  The space following S" is the normal
+space between FORTH words and is not a part of the string.
+
+This is tricky to define because it has to do different things depending on whether
+we are compiling or in immediate mode.  (Thus the word is marked IMMEDIATE so it can
+detect this and do different things).
+
+In compile mode we append
+LITSTRING <string length> <string rounded up 4 bytes>
+to the current word.  The primitive LITSTRING does the right thing when the current
+word is executed.
+
+In immediate mode there isn't a particularly good place to put the string, but in this
+case we put the string at HERE (but we _don't_ change HERE).  This is meant as a temporary
+location, likely to be overwritten soon after.
+)
+( C, appends a byte to the current compiled word. )
+: C,
+    HERE @ C!    ( store the character in the compiled image )
+    1 HERE +!    ( increment HERE pointer by 1 byte )
+;
+
+: S" IMMEDIATE        ( -- addr len )
+    STATE @ IF          ( compiling? )
+        ' LITSTRING ,       ( compile LITSTRING )
+        HERE @              ( save the address of the length word on the stack )
+        0 ,                 ( dummy length - we don't know what it is yet )
+        BEGIN
+            KEY             ( get next character of the string )
+            DUP '"' <>
+        WHILE
+            C,              ( copy character )
+        REPEAT
+        DROP                ( drop the double quote character at the end )
+        DUP                 ( get the saved address of the length word )
+        HERE @ SWAP -       ( calculate the length )
+        C-                  ( subtract 4 (because we measured from the start of the length word) )
+        SWAP !              ( and back-fill the length location )
+    ELSE                ( immediate mode )
+        HERE @              ( get the start address of the temporary space )
+        BEGIN
+            KEY
+            DUP '"' <>
+        WHILE
+            OVER C!         ( save next character )
+            1+              ( increment address )
+        REPEAT
+        DROP                ( drop the final " character )
+        HERE @ -            ( calculate the length )
+        HERE @              ( push the start address )
+        SWAP                ( addr len )
+    THEN
+;
+
+(
+." is the print string operator in FORTH.  Example: ." Something to print"
+The space after the operator is the ordinary space required between words and is not
+a part of what is printed.
+
+In immediate mode we just keep reading characters and printing them until we get to
+the next double quote.
+
+In compile mode we use S" to store the string, then add TELL afterwards:
+LITSTRING <string length> <string rounded up to 4 bytes> TELL
+
+It may be interesting to note the use of [COMPILE] to turn the call to the immediate
+word S" into compilation of that word.  It compiles it into the definition of .",
+not into the definition of the word being compiled when this is running (complicated
+enough for you?)
+)
+: ." IMMEDIATE        ( -- )
+    STATE @ IF          ( compiling? )
+        [COMPILE] S"        ( read the string, and compile LITSTRING, etc. )
+        ' TELL ,            ( compile the final TELL )
+    ELSE                ( In immediate mode, just read characters and print them until we get to the ending double quote. )
+        BEGIN
+            KEY
+            DUP '"' = IF
+                DROP    ( drop the double quote character )
+                EXIT    ( return from this function )
+            THEN
+            EMIT
+        AGAIN
+    THEN
+;
+
+(
+CONSTANTS AND VARIABLES ----------------------------------------------------------------------
+
+In FORTH, global constants and variables are defined like this:
+
+10 CONSTANT TEN        when TEN is executed, it leaves the integer 10 on the stack
+VARIABLE VAR        when VAR is executed, it leaves the address of VAR on the stack
+
+Constants can be read but not written, eg:
+
+TEN . CR        prints 10
+
+You can read a variable (in this example called VAR) by doing:
+
+VAR @            leaves the value of VAR on the stack
+VAR @ . CR        prints the value of VAR
+VAR ? CR        same as above, since ? is the same as @ .
+
+and update the variable by doing:
+
+20 VAR !        sets VAR to 20
+
+Note that variables are uninitialised (but see VALUE later on which provides initialised
+variables with a slightly simpler syntax).
+
+How can we define the words CONSTANT and VARIABLE?
+
+The trick is to define a new word for the variable itself (eg. if the variable was called
+'VAR' then we would define a new word called VAR).  This is easy to do because we exposed
+dictionary entry creation through the CREATE word (part of the definition of : above).
+A call to WORD [TEN] CREATE (where [TEN] means that "TEN" is the next word in the input)
+leaves the dictionary entry:
+)
+: CONSTANT
+    WORD        ( get the name (the name follows CONSTANT) )
+    CREATE      ( make the dictionary entry )
+    DOCOL ,     ( append DOCOL (the codeword field of this word) )
+    ' LIT ,     ( append the codeword LIT )
+    ,           ( append the value on the top of the stack )
+    ' EXIT ,    ( append the codeword EXIT )
+    MARKER ,       ( REMOVE LATER ON )
+;
+
+: ALLOT        ( n -- addr )
+    HERE @ SWAP    ( here n )
+    HERE +!        ( adds n to HERE, after this the old value of HERE is still on the stack )
+;
+
+: CELLS ( n -- n ) 4 * ;
+
+: VARIABLE
+    1 CELLS ALLOT   ( allocate 1 cell of memory, push the pointer to this memory )
+    WORD CREATE     ( make the dictionary entry (the name follows VARIABLE) )
+    DOCOL ,         ( append DOCOL (the codeword field of this word) )
+    ' LIT ,         ( append the codeword LIT )
+    ,               ( append the pointer to the new memory )
+    ' EXIT ,        ( append the codeword EXIT )
+    MARKER ,       ( REMOVE LATER ON )
+;
+
+(
+VALUES ----------------------------------------------------------------------
+
+VALUEs are like VARIABLEs but with a simpler syntax.  You would generally use them when you
+want a variable which is read often, and written infrequently.
+
+20 VALUE VAL     creates VAL with initial value 20
+VAL        pushes the value (20) directly on the stack
+30 TO VAL    updates VAL, setting it to 30
+VAL        pushes the value (30) directly on the stack
+
+Notice that 'VAL' on its own doesn't return the address of the value, but the value itself,
+making values simpler and more obvious to use than variables (no indirection through '@').
+The price is a more complicated implementation, although despite the complexity there is no
+performance penalty at runtime.
+
+A naive implementation of 'TO' would be quite slow, involving a dictionary search each time.
+But because this is FORTH we have complete control of the compiler so we can compile TO more
+efficiently, turning:
+TO VAL
+into:
+LIT <addr> !
+and calculating <addr> (the address of the value) at compile time.
+)
+
+: VALUE        ( n -- )
+    WORD CREATE    ( make the dictionary entry (the name follows VALUE) )
+    DOCOL ,        ( append DOCOL )
+    ' LIT ,        ( append the codeword LIT )
+    ,              ( append the initial value )
+    ' EXIT ,       ( append the codeword EXIT )
+    MARKER ,       ( REMOVE LATER ON )
+;
+
+: TO IMMEDIATE    ( n -- )
+    WORD            ( get the name of the value )
+    FIND            ( look it up in the dictionary )
+    >DFA            ( get a pointer to the first data field (the 'LIT') )
+    C+              ( increment to point at the value )
+    STATE @ IF   ( compiling? )
+        ' LIT ,     ( compile LIT )
+        ,           ( compile the address of the value )
+        ' ! ,       ( compile ! )
+    ELSE        ( immediate mode )
+        !           ( update it straightaway )
+    THEN
+;
+
+( x +TO VAL adds x to VAL )
+: +TO IMMEDIATE
+    WORD        ( get the name of the value )
+    FIND        ( look it up in the dictionary )
+    >DFA        ( get a pointer to the first data field (the 'LIT') )
+    C+          ( increment to point at the value )
+    STATE @ IF  ( compiling? )
+        ' LIT ,     ( compile LIT )
+        ,           ( compile the address of the value )
+        ' +! ,      ( compile +! )
+    ELSE        ( immediate mode )
+        +!          ( update it straightaway )
+    THEN
+;
+
+(
+PRINTING THE DICTIONARY ----------------------------------------------------------------------
+
+ID. takes an address of a dictionary entry and prints the word's name.
+
+For example: LATEST @ ID. would print the name of the last word that was defined.
+)
+: ID.
+    C+        ( skip over the link pointer )
+    DUP C@          ( get the flags/length byte )
+    F_LENMASK AND   ( mask out the flags - just want the length )
+    BEGIN
+        DUP 0>      ( length > 0? )
+    WHILE
+        SWAP 1+     ( addr len -- len addr+1 )
+        DUP C@      ( len addr -- len addr char | get the next character)
+        EMIT        ( len addr char -- len addr | and print it)
+        SWAP 1-     ( len addr -- addr len-1    | subtract one from length )
+    REPEAT
+    2DROP        ( len addr -- )
+;
+
+(
+'WORD word FIND ?HIDDEN' returns true if 'word' is flagged as hidden.
+'WORD word FIND ?IMMEDIATE' returns true if 'word' is flagged as immediate.
+)
+: ?HIDDEN
+    C+        ( skip over the link pointer )
+    C@        ( get the flags/length byte )
+    F_HIDDEN AND    ( mask the F_HIDDEN flag and return it (as a truth value) )
+;
+
+: ?IMMEDIATE
+    C+        ( skip over the link pointer )
+    C@        ( get the flags/length byte )
+    F_IMMED AND    ( mask the F_IMMED flag and return it (as a truth value) )
+;
+
+
+
+\ TODO: FORGET
 \ LATEST @ SEE
