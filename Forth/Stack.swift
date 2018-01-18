@@ -12,41 +12,41 @@ class Stack {
 
     private let memory: Memory
     private let size: Cell
-    private let topStorage: Cell
+    private let addressAddress: Cell
 
-    var top: Cell {
+    var address: Cell {
         set {
-            self.memory[self.topStorage] = newValue
+            self.memory[self.addressAddress] = newValue
         }
         get {
-            return self.memory[self.topStorage]
+            return self.memory[self.addressAddress]
         }
     }
 
-    var ptr: Cell
+    var pointer: Cell
 
-    init(memory: Memory, top: Cell, size: Cell, topStorage: Cell) {
+    init(memory: Memory, address: Cell, size: Cell, addressAddress: Cell) {
         self.memory = memory
-        self.topStorage = topStorage
-        self.ptr = top
+        self.addressAddress = addressAddress
+        self.pointer = address
         self.size = size
-        self.top = top
+        self.address = address
     }
 
     func push(_ cell: Cell) throws {
-        if self.ptr <= self.top - self.size {
+        if self.pointer <= self.address - self.size {
             throw RuntimeError.stackOverflow
         }
-        self.ptr -= Cell(MemoryLayout<Cell>.size)
-        self.memory[self.ptr] = cell
+        self.pointer -= Cell(MemoryLayout<Cell>.size)
+        self.memory[self.pointer] = cell
     }
 
     func pop() throws -> Cell {
-        if self.ptr >= self.top {
+        if self.pointer >= self.address {
             throw RuntimeError.stackDepleted
         }
-        let cell: Cell = self.memory[self.ptr]
-        self.ptr += Cell(MemoryLayout<Cell>.size)
+        let cell: Cell = self.memory[self.pointer]
+        self.pointer += Cell(MemoryLayout<Cell>.size)
         return cell
     }
 }

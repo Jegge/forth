@@ -11,5 +11,7 @@ import Foundation
 enum RuntimeError: Error {
     case stackDepleted
     case stackOverflow
+    case expectedWord
+    case parseError(_:[Byte])
     case invalidAddress(_: Cell)
 }

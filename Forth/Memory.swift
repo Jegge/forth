@@ -72,11 +72,33 @@ class Memory {
         }
     }
 
-    func set(bytes: [Byte], at address: Cell) {
-        for index in 0..<bytes.count {
-            self.data[index + Int(address)] = bytes[index]
+    subscript (text: Text) -> [Byte] {
+        get {
+            var bytes: [Byte] = []
+            for index in 0..<Int(text.length) {
+                bytes.append(self.data[index + Int(text.address)])
+            }
+            return bytes
+        }
+        set {
+            for index in 0..<Int(text.length) {
+                self.data[index + Int(text.address)] = newValue[index]
+            }
         }
     }
+//
+//    func set(bytes: [Byte], at address: Cell) {
+//        for index in 0..<bytes.count {
+//            self.data[index + Int(address)] = bytes[index]
+//        }
+//    }
+//    func get(bytesAt address: Cell, count: Cell) -> [Byte] {
+//        var bytes: [Byte] = []
+//        for index in 0..<count {
+//            bytes.append(self.data[Int(index + address)])
+//        }
+//        return bytes
+//    }
 
     func append(byte: Byte) {
         self[self.here] = byte

@@ -12,6 +12,11 @@ typealias Cell = Int32
 typealias Byte = UInt8
 typealias Code = (() throws -> Void)
 
+struct Text {
+    let address: Cell
+    let length: Byte
+}
+
 struct Flags {
     static let none: Byte = 0x00
     static let immediate: Byte = 0x80

@@ -19,7 +19,7 @@ extension FileHandle : TextOutputStream {
 
 protocol SystemProvided {
     func print(_ string: String, error: Bool)
-    func exit(_ value: Int) -> Never
+    func exit(_ value: Cell) -> Never
     func readLine () -> String?
 }
 
@@ -39,7 +39,7 @@ class System: SystemProvided {
         }
     }
     // the warning "Will never be executed" in the followling line is due to a compiler bug involving protocols with return type Never
-    func exit(_ value: Int) -> Never {
+    func exit(_ value: Cell) -> Never {
         Darwin.exit(Int32(value))
     }
     func readLine () -> String? {

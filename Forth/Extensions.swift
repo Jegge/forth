@@ -9,6 +9,9 @@
 import Foundation
 
 extension String {
+    init (ascii bytes: [Byte]) {
+        self = String(bytes: bytes, encoding: String.Encoding.ascii)!
+    }
     var ascii: [Byte] {
         return unicodeScalars.filter { $0.isASCII }.map { Byte($0.value) }
     }
