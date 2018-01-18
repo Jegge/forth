@@ -8,58 +8,109 @@
 
 import Foundation
 
+
+
 class Memory {
 
-    private var natives: [Address: Block] = [:]
-    private var data = Data(count: Int(Address.max))
+    private let chunk: Cell
+    private var data: Data = Data()
 
-    init () {
-        self.here = 2
+    init (chunk: Cell) {
+        self.chunk = chunk
+        self.here = Cell(MemoryLayout<Cell>.size)
     }
-    private (set) var here: Address {
+
+    var here: Cell {
         set {
-            self.set(address: newValue, at: 0)
+            self[Address.here] = newValue
         }
         get {
-            return self.get(addressAt: 0)
+            return self[Address.here]
         }
     }
 
-    func set(byte: Byte, at addr: Address) {
-        self.data[Int(addr)] = byte
-    }
-    func set(address: Address, at addr: Address) {
-        self.data[Int(addr)] = Byte(address >> 8)
-        self.data[Int(addr + 1)] = Byte(address & 0x00ff)
-    }
-    func set(cell: Cell, at addr: Address) {
-        self.set(address: Address(bitPattern:cell), at: addr)
-    }
-    func set(bytes: [Byte], at addr: Address) {
-        for index in 0..<bytes.count {
-            self.set(byte: bytes[index], at: addr + Address(index))
+    private func growIfNeededToReach(address: Cell) {
+        if address >= self.data.count - (MemoryLayout<Cell>.size + 1) {
+            self.data.append(Data(count: Int(self.chunk)))
         }
-    }
-    func set(string: String, at addr: Address) {
-        self.set(bytes: Array(string.utf8), at: addr)
-    }
-    func get(byteAt addr: Address) -> Byte {
-        return self.data[Int(addr)]
-    }
-    func get(addressAt addr: Address) -> Address {
-        return Address(self.data[Int(addr)]) << 8 | Address(self.data[Int(addr + 1)])
-    }
-    func get(cellAt addr: Address) -> Cell {
-        return Cell(bitPattern: self.get(addressAt: addr))
-    }
-    func get(bytesAt addr: Address, length: Cell) -> [Byte] {
-        var buffer: [Byte] = []
-        for index in 0..<length {
-            buffer.append(self.get(byteAt: addr + Address(index)))
-        }
-        return buffer
     }
 
+    subscript (address: Cell) -> Cell {
+        get {
+            if address < 0 || address > self.data.count - 1 {
+                return 0
+            }
+            let a = Cell(self.data[Int(address + 0)]) << 24
+            let b = Cell(self.data[Int(address + 1)]) << 16
+            let c = Cell(self.data[Int(address + 2)]) << 8
+            let d = Cell(self.data[Int(address + 3)])
+            return a | b | c | d
+        }
+        set {
+            if address < 0 {
+                return
+            }
+            self.growIfNeededToReach(address: address)
+            self.data[Int(address + 0)] = Byte((newValue >> 24) & 0x000000FF)
+            self.data[Int(address + 1)] = Byte((newValue >> 16) & 0x000000FF)
+            self.data[Int(address + 2)] = Byte((newValue >> 8) & 0x000000FF)
+            self.data[Int(address + 3)] = Byte((newValue & 0x000000FF))
+        }
+    }
+
+    subscript (address: Cell) -> Byte {
+        get {
+            if address < 0 || address > self.data.count - 1 {
+                return 0
+            }
+           return self.data[Int(address)]
+        }
+        set {
+            if address < 0 {
+                return
+            }
+            self.growIfNeededToReach(address: address)
+            self.data[Int(address)] = newValue
+        }
+    }
+
+
+//    subscript (address: Cell) -> [Byte] {
+//        get {
+//            var buffer: [Byte] = []
+//            for index in 0..<length {
+//                buffer.append(self.data[address + Cell(index)])
+//            }
+//            return buffer
+//        }
+//        set {
+//            for index in 0..<bytes.count {
+//                self.data[address + Cell(index)] = bytes[index]
+//            }
+//        }
+//    }
+
+    func append(byte: Byte) {
+        self[self.here] = byte
+        self.here += Cell(MemoryLayout<Byte>.size)
+    }
+
+    func append(cell: Cell) {
+        self[self.here] = cell
+        self.here += Cell(MemoryLayout<Cell>.size)
+    }
+
+    func append(bytes: [Byte]) {
+        bytes.forEach { self.append(byte: $0) }
+    }
+
+    func align () {
+        while here % Cell(MemoryLayout<Cell>.size) != 0 {
+            self.append(byte: 0)
+        }
+    }
+
+/*
     func insert(byte: Byte) {
         self.set(byte: byte, at: self.here)
         self.here += Address(MemoryLayout<Byte>.size)
@@ -166,9 +217,9 @@ class Memory {
         let len = self.get(byteAt: address + Address(MemoryLayout<Address>.size)) & Flags.lenmask
         return address + Address(MemoryLayout<Address>.size) + Address(len) + 1
     }
-
-    func dump (cap: Address = Address.max) {
-        var address: Address = 0
+*/
+    func dump (from: Cell, to: Cell) {
+        var address: Cell = from
         let count = 16
         print("       ", separator: "", terminator: "")
         for index in (0..<count) {
@@ -181,20 +232,19 @@ class Memory {
         }
         print()
 
-        while address < cap {
+        while address < to {
             print(String(format: "% 6d ", address), separator: "", terminator: "")
             for index in (0..<count) {
-                let b = self.get(byteAt: address + Address(index))
+                let b: Byte = self[address + Cell(index)]
                 print(String(format: "| %3d ", b), separator: "", terminator: "")
                 if b > 31 && b < 127 {
                     print(String(format: "%c ", b), separator: "", terminator: "")
                 } else {
                     print("  ", separator: "", terminator: "")
                 }
-
             }
             print()
-            address += Address(count)
+            address += Cell(count)
         }
     }
  }

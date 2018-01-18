@@ -11,4 +11,5 @@ import Foundation
 enum RuntimeError: Error {
     case stackDepleted
     case stackOverflow
+    case invalidAddress(_: Cell)
 }

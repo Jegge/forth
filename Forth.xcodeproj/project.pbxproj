@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D21E55A62010104A00C91CCE /* Dictionary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21E55A52010104A00C91CCE /* Dictionary.swift */; };
+		D21E55A82010145F00C91CCE /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21E55A72010145E00C91CCE /* Extensions.swift */; };
 		D25E6909200C887F000059EB /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E6908200C887F000059EB /* main.swift */; };
 		D25E6910200C88C8000059EB /* Machine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E690F200C88C8000059EB /* Machine.swift */; };
 		D25E6914200C8953000059EB /* Types.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E6913200C8953000059EB /* Types.swift */; };
@@ -28,6 +30,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D21E55A52010104A00C91CCE /* Dictionary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dictionary.swift; sourceTree = "<group>"; };
+		D21E55A72010145E00C91CCE /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		D25E6905200C887F000059EB /* Forth */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Forth; sourceTree = BUILT_PRODUCTS_DIR; };
 		D25E6908200C887F000059EB /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		D25E690F200C88C8000059EB /* Machine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Machine.swift; sourceTree = "<group>"; };
@@ -67,10 +71,12 @@
 		D25E6907200C887F000059EB /* Forth */ = {
 			isa = PBXGroup;
 			children = (
-				D25E6917200C8EE7000059EB /* RuntimeError.swift */,
 				D25E6913200C8953000059EB /* Types.swift */,
+				D21E55A72010145E00C91CCE /* Extensions.swift */,
+				D25E6917200C8EE7000059EB /* RuntimeError.swift */,
 				D25E6919200CA0A4000059EB /* Memory.swift */,
 				D25E691B200CA621000059EB /* Stack.swift */,
+				D21E55A52010104A00C91CCE /* Dictionary.swift */,
 				D25E690F200C88C8000059EB /* Machine.swift */,
 				D25E6908200C887F000059EB /* main.swift */,
 			);
@@ -138,7 +144,9 @@
 				D25E6909200C887F000059EB /* main.swift in Sources */,
 				D25E691C200CA621000059EB /* Stack.swift in Sources */,
 				D25E691A200CA0A4000059EB /* Memory.swift in Sources */,
+				D21E55A82010145F00C91CCE /* Extensions.swift in Sources */,
 				D25E6918200C8EE7000059EB /* RuntimeError.swift in Sources */,
+				D21E55A62010104A00C91CCE /* Dictionary.swift in Sources */,
 				D25E6910200C88C8000059EB /* Machine.swift in Sources */,
 				D25E6914200C8953000059EB /* Types.swift in Sources */,
 			);
