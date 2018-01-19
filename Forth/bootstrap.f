@@ -729,16 +729,6 @@ definitions, not in immediate mode.
 ;
 
 
-: HW1 S" Hallo Welt!1" TELL 65 EMIT ;
-LATEST @ SEE
-: HW2 S" Hallo Welt!22" IGNORE TELL ;
-LATEST @ SEE
-: HW3 S" Hallo Welt!333" TELL ;
-LATEST @ SEE
-: HW4 S" Hallo Welt!4444" TELL ;
-LATEST @ SEE
 
-\WORD HW FIND 48 DUMP
-\WORD HW FIND SEE
 \ TODO: FORGET
 \ LATEST @ SEE

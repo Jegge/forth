@@ -90,9 +90,7 @@ class Machine {
             let address = self.nextIp + Memory.Size.cell
             try self.pstack.push(address)
             try self.pstack.push(length)
-            print(" --- LITSTRING \(length) \(String(ascii: self.memory[Text(address: address, length: length)]))")
             self.nextIp = Memory.align(address: self.nextIp + length)
-            self.next()
         }
         _ = self.dictionary.define(word: "DROP") {
             _ = try self.pstack.pop()
@@ -286,7 +284,6 @@ class Machine {
             let bytes = self.word()
             let text = Text(address: Address.buffer, length: Cell(bytes.count))
             self.memory[text] = bytes
-//            print(" --- WORD: \(String(ascii: bytes))")
             try self.pstack.push(text.address)
             try self.pstack.push(Cell(text.length))
         }
