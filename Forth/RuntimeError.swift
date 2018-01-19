@@ -20,9 +20,9 @@ extension RuntimeError: CustomStringConvertible {
     var description: String {
         switch self {
         case .stackDepleted(let name):
-            return "Expected an element on the stack '\(name)', but the stack was empty."
+            return "Expected an element on the \(name) stack, but the stack was empty."
         case .stackOverflow(let name):
-            return "Tried to put an element on the stack '\(name)', but the stack was full."
+            return "Tried to put an element on the \(name) stack, but the stack was full."
         case .parseError(let token):
             return "Parse error: '\(String(ascii: token))' is neither a known word nor a number literal."
         case .seeUnknownWord(let name):

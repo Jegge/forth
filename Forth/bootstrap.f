@@ -742,6 +742,7 @@ definitions, not in immediate mode.
 : WELCOME
     ." Jegge's fifth Forth v" VERSION . CR
     ." ^D to quit." CR
+    CR
 ;
 WELCOME
 HIDE WELCOME

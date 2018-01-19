@@ -23,8 +23,8 @@ do {
 
 let system = System(lines: lines)
 let memory = Memory(chunk: 4096 * 8)
-let rstack = Stack(memory: memory, address: Address.rstack, size: Address.rstackSize, addressAddress: Address.r0, name: "RST")
-let pstack = Stack(memory: memory, address: Address.pstack, size: Address.pstackSize, addressAddress: Address.s0, name: "PST")
+let rstack = Stack(memory: memory, address: Address.rstack, size: Address.rstackSize, addressAddress: Address.r0, name: "return")
+let pstack = Stack(memory: memory, address: Address.pstack, size: Address.pstackSize, addressAddress: Address.s0, name: "parameter")
 let dictionary = Dictionary(memory: memory)
 
 let machine = Machine(system: system, memory: memory, rstack: rstack, pstack: pstack, dictionary: dictionary)

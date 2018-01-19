@@ -454,15 +454,11 @@ class Machine {
                 return
             }
 
-            let link = self.dictionary.find(name)
-            //print(" --- INTERPRETER READ: '\(String(ascii: name))'")
-
-            if link != 0 { // it's in the dictionary
-                let cfa = self.dictionary.tcfa(word: link)
-                //if self.state == State.immediate || (self.dictionary.flags(of: link) & Flags.immediate == Flags.immediate) {
-                if self.state == State.immediate || self.dictionary.isImmediate(word: link) {
+            let word = self.dictionary.find(name)
+            if word != 0 { // it's in the dictionary
+                let cfa = self.dictionary.tcfa(word: word)
+                if self.state == State.immediate || self.dictionary.isImmediate(word: word) {
                     self.memory[self.execAddress] = cfa
-                    //print(" --- INTERPRETER NEXT: '\(String(ascii: self.dictionary.name(of: self.dictionary.link(before: cfa))))'")
                 } else {
                     self.memory.append(cell: cfa)
                 }
@@ -600,7 +596,6 @@ class Machine {
         self.state = State.immediate
         if hard {
             self.pstack.pointer = self.pstack.address
-            self.rstack.pointer = self.rstack.address
         }
         if self.dictionary.isDirty(word: self.dictionary.latest) {
             self.dictionary.removeLatest()
