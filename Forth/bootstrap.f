@@ -391,6 +391,19 @@ In immediate mode there isn't a particularly good place to put the string, but i
 case we put the string at HERE (but we _don't_ change HERE).  This is meant as a temporary
 location, likely to be overwritten soon after.
 )
+
+(
+ALIGNED takes an address and rounds it up (aligns it) to the next 4 byte boundary.
+)
+: ALIGNED    ( addr -- addr )
+3 + 3 INVERT AND    ( (addr+3) & ~3 )
+;
+
+(
+ALIGN aligns the HERE pointer, so the next word appended will be aligned properly.
+)
+: ALIGN HERE @ ALIGNED HERE ! ;
+
 ( C, appends a byte to the current compiled word. )
 : C,
     HERE @ C!    ( store the character in the compiled image )
@@ -413,6 +426,7 @@ location, likely to be overwritten soon after.
         HERE @ SWAP -       ( calculate the length )
         C-                  ( subtract 4 (because we measured from the start of the length word) )
         SWAP !              ( and back-fill the length location )
+        ALIGN               ( round up to next multiple of 4 bytes for the remaining code )
     ELSE                ( immediate mode )
         HERE @              ( get the start address of the temporary space )
         BEGIN
@@ -622,7 +636,109 @@ For example: LATEST @ ID. would print the name of the last word that was defined
     F_IMMED AND    ( mask the F_IMMED flag and return it (as a truth value) )
 ;
 
+(
+CASE ----------------------------------------------------------------------
+
+CASE...ENDCASE is how we do switch statements in FORTH.  There is no generally
+agreed syntax for this, so I've gone for the syntax mandated by the ISO standard
+FORTH (ANS-FORTH).
+
+( some value on the stack )
+CASE
+test1 OF ... ENDOF
+test2 OF ... ENDOF
+testn OF ... ENDOF
+... ( default case )
+ENDCASE
+
+The CASE statement tests the value on the stack by comparing it for equality with
+test1, test2, ..., testn and executes the matching piece of code within OF ... ENDOF.
+If none of the test values match then the default case is executed.  Inside the ... of
+the default case, the value is still at the top of stack (it is implicitly DROP-ed
+by ENDCASE).  When ENDOF is executed it jumps after ENDCASE (ie. there is no "fall-through"
+and no need for a break statement like in C).
+
+The default case may be omitted.  In fact the tests may also be omitted so that you
+just have a default case, although this is probably not very useful.
+
+An example (assuming that 'q', etc. are words which push the ASCII value of the letter
+on the stack):
+
+0 VALUE QUIT
+0 VALUE SLEEP
+KEY CASE
+'q' OF 1 TO QUIT ENDOF
+'s' OF 1 TO SLEEP ENDOF
+( default case: )
+." Sorry, I didn't understand key <" DUP EMIT ." >, try again." CR
+ENDCASE
+
+(In some versions of FORTH, more advanced tests are supported, such as ranges, etc.
+Other versions of FORTH need you to write OTHERWISE to indicate the default case.
+As I said above, this FORTH tries to follow the ANS FORTH standard).
+
+The implementation of CASE...ENDCASE is somewhat non-trivial.  I'm following the
+implementations from here:
+http://www.uni-giessen.de/faq/archiv/forthfaq.case_endcase/msg00000.html
+
+The general plan is to compile the code as a series of IF statements:
+
+CASE                (push 0 on the immediate-mode parameter stack)
+test1 OF ... ENDOF        test1 OVER = IF DROP ... ELSE
+test2 OF ... ENDOF        test2 OVER = IF DROP ... ELSE
+testn OF ... ENDOF        testn OVER = IF DROP ... ELSE
+... ( default case )        ...
+ENDCASE                DROP THEN [THEN [THEN ...]]
+
+The CASE statement pushes 0 on the immediate-mode parameter stack, and that number
+is used to count how many THEN statements we need when we get to ENDCASE so that each
+IF has a matching THEN.  The counting is done implicitly.  If you recall from the
+implementation above of IF, each IF pushes a code address on the immediate-mode stack,
+and these addresses are non-zero, so by the time we get to ENDCASE the stack contains
+some number of non-zeroes, followed by a zero.  The number of non-zeroes is how many
+times IF has been called, so how many times we need to match it with THEN.
+
+This code uses [COMPILE] so that we compile calls to IF, ELSE, THEN instead of
+actually calling them while we're compiling the words below.
+
+As is the case with all of our control structures, they only work within word
+definitions, not in immediate mode.
+)
+: CASE IMMEDIATE
+    0        ( push 0 to mark the bottom of the stack )
+;
+
+: OF IMMEDIATE
+    ' OVER ,        ( compile OVER )
+    ' = ,           ( compile = )
+    [COMPILE] IF    ( compile IF )
+    ' DROP ,        ( compile DROP )
+;
+
+: ENDOF IMMEDIATE
+    [COMPILE] ELSE      ( ENDOF is the same as ELSE )
+;
+
+: ENDCASE IMMEDIATE
+    ' DROP ,            ( compile DROP )
+    BEGIN               ( keep compiling THEN until we get to our zero marker )
+        ?DUP
+    WHILE
+        [COMPILE] THEN
+    REPEAT
+;
 
 
+: HW1 S" Hallo Welt!1" TELL 65 EMIT ;
+LATEST @ SEE
+: HW2 S" Hallo Welt!22" IGNORE TELL ;
+LATEST @ SEE
+: HW3 S" Hallo Welt!333" TELL ;
+LATEST @ SEE
+: HW4 S" Hallo Welt!4444" TELL ;
+LATEST @ SEE
+
+\WORD HW FIND 48 DUMP
+\WORD HW FIND SEE
 \ TODO: FORGET
 \ LATEST @ SEE

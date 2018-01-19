@@ -73,12 +73,10 @@ class Machine {
         _ = self.dictionary.define(constant: "F_LENMASK", value: Cell(Flags.lenmask), stack: self.pstack)
         _ = self.dictionary.define(constant: "MARKER", value: Dictionary.marker, stack: self.pstack)
 
-        let docol = self.dictionary.define(word: "DOCOL") {
+        let enter = self.dictionary.define(word: "ENTER") {
             try self.rstack.push(self.oldIp)
         }
-
-        _ = self.dictionary.define(constant: "DOCOL", value: docol, stack: self.pstack)
-
+        _ = self.dictionary.define(constant: "DOCOL", value: enter, stack: self.pstack)
         let exit = self.dictionary.define(word: "EXIT") {
             self.nextIp = try self.rstack.pop()
         }
@@ -89,9 +87,11 @@ class Machine {
         _ = self.dictionary.define(word: "LITSTRING") {
             self.next()
             let length = self.memory[self.nextIp] as Cell
-            try self.pstack.push(self.nextIp)
+            let address = self.nextIp + Memory.Size.cell
+            try self.pstack.push(address)
             try self.pstack.push(length)
-            self.nextIp += length
+            print(" --- LITSTRING \(length) \(String(ascii: self.memory[Text(address: address, length: length)]))")
+            self.nextIp = Memory.align(address: self.nextIp + length)
             self.next()
         }
         _ = self.dictionary.define(word: "DROP") {
@@ -276,7 +276,7 @@ class Machine {
         _ = self.dictionary.define(word: "TELL") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
-            let text = self.memory[Text(address: address, length: Byte(length))]
+            let text = self.memory[Text(address: address, length: length)]
             self.system.print(String(ascii: text), error: false)
         }
         _ = self.dictionary.define(word: "KEY") {
@@ -284,7 +284,7 @@ class Machine {
         }
         let word = self.dictionary.define(word: "WORD") {
             let bytes = self.word()
-            let text = Text(address: Address.buffer, length: Byte(bytes.count))
+            let text = Text(address: Address.buffer, length: Cell(bytes.count))
             self.memory[text] = bytes
 //            print(" --- WORD: \(String(ascii: bytes))")
             try self.pstack.push(text.address)
@@ -293,7 +293,7 @@ class Machine {
         _ = self.dictionary.define(word: "NUMBER") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
-            let text = self.memory[Text(address: address, length: Byte(length))]
+            let text = self.memory[Text(address: address, length: length)]
             let (value, unconverted) = self.number(text, base: self.base)
             try self.pstack.push(value)
             try self.pstack.push(unconverted)
@@ -304,7 +304,7 @@ class Machine {
         let find = self.dictionary.define(word: "FIND") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
-            let name = self.memory[Text(address: address, length: Byte(length))]
+            let name = self.memory[Text(address: address, length: length)]
             let link = self.dictionary.find(byName: name)
 //            print(" --- FIND: \(String(ascii: name)) -> \(link)")
             try self.pstack.push(link)
@@ -370,7 +370,7 @@ class Machine {
             let address = try self.pstack.pop()
             try self.pstack.push(self.dictionary.tcfa(word: address))
         }
-        _ = self.dictionary.define(word: ">DFA", words: [ docol, tcfa, inccell, exit ])
+        _ = self.dictionary.define(word: ">DFA", words: [ enter, tcfa, inccell, exit ])
 
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
             self.memory[self.dictionary.latest + Memory.Size.cell] ^= Flags.immediate
@@ -378,12 +378,12 @@ class Machine {
         let hidden = self.dictionary.define(word: "HIDDEN") {
             self.memory[try self.pstack.pop() + Memory.Size.cell] ^= Flags.hidden
         }
-        _ = self.dictionary.define(word: "HIDE", words: [ docol, word, find, hidden, exit ])
+        _ = self.dictionary.define(word: "HIDE", words: [ enter, word, find, hidden, exit ])
         
         let create = self.dictionary.define(word: "CREATE") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
-            let name = self.memory[Text(address: address, length: Byte(length))]
+            let name = self.memory[Text(address: address, length: length)]
             _ = self.dictionary.create(word: name, immediate: false)
         }
         let branch = self.dictionary.define(word: "BRANCH") {
@@ -417,12 +417,11 @@ class Machine {
             let address = try self.pstack.pop()
             self.system.print(self.memory.dump(address: address, length: length) + "\n", error: false)
         }
-
         let comma = self.dictionary.define(word: ",") {
             self.memory.append(cell: try self.pstack.pop())
         }
-        _ = self.dictionary.define(word: ":", words: [ docol, word, create, lit, docol, comma, latest, fetch, hidden, tocompile, exit ])
-        _ = self.dictionary.define(word: ";", immediate: true, words: [ docol, lit, exit, comma, lit, Dictionary.marker, comma, latest, fetch, hidden, toimmediate, exit ])
+        _ = self.dictionary.define(word: ":", words: [ enter, word, create, lit, enter, comma, latest, fetch, hidden, tocompile, exit ])
+        _ = self.dictionary.define(word: ";", immediate: true, words: [ enter, lit, exit, comma, lit, Dictionary.marker, comma, latest, fetch, hidden, toimmediate, exit ])
 
         let interpret = self.dictionary.define(word: "INTERPRET") {
 
@@ -437,7 +436,8 @@ class Machine {
 
             if link != 0 { // it's in the dictionary
                 let cfa = self.dictionary.tcfa(word: link)
-                if self.state == State.immediate || (self.dictionary.flags(of: link) & Flags.immediate == Flags.immediate) {
+                //if self.state == State.immediate || (self.dictionary.flags(of: link) & Flags.immediate == Flags.immediate) {
+                if self.state == State.immediate || self.dictionary.isImmediate(word: link) {
                     self.memory[self.execAddress] = cfa
                     //print(" --- INTERPRETER NEXT: '\(String(ascii: self.dictionary.name(of: self.dictionary.link(before: cfa))))'")
                 } else {
@@ -459,15 +459,8 @@ class Machine {
 
             throw RuntimeError.parseError(name)
         }
-//
-//        _ = self.dictionary.define(word: ".") {
-//            print(try self.pstack.pop())
-//        }
 
-        self.ignore = self.dictionary.define(word: "IGNORE") {
-            // intentionally left blank
-        }
-
+        self.ignore = self.dictionary.define(word: "IGNORE") { /* intentionally left blank */ }
         self.quit = self.dictionary.define(word: "QUIT", words: [ rz, rspstore, interpret, ignore, branch, Memory.Size.cell * -3 ])
 
         self.execAddress = self.quit + Memory.Size.cell * 3
@@ -587,7 +580,7 @@ class Machine {
 
 extension Machine: CustomStringConvertible {
     var description: String {
-        let word: Cell = self.dictionary.word(having: self.memory[self.nextIp])
+        let word: Cell = self.dictionary.cfat(at: self.memory[self.nextIp])
         var name = String(ascii: self.dictionary.name(of: word))
         if name == "LIT" || name == "BRANCH" || name == "0BRANCH" {
             let data: Cell = self.memory[self.nextIp + Memory.Size.cell]

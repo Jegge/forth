@@ -8,7 +8,6 @@
 
 import Foundation
 
-// p self.memory.dump(from: Address.dictionary, to: Address.dictionary + self.latest + 32)
 class Memory {
 
     private let chunk: Cell
@@ -31,6 +30,10 @@ class Memory {
         get {
             return self[Address.here]
         }
+    }
+
+    static func align(address: Cell) -> Cell {
+        return (address + (Memory.Size.cell - 1)) & ~(Memory.Size.cell - 1)
     }
 
     private func growIfNeededToReach(address: Cell) {
@@ -127,11 +130,18 @@ class Memory {
         var index = address
         while index < address + length {
 
-            result += String(format: "% 8X", index)
+            result += String(format: "% 8X |", index)
             for i in 0..<16 {
+                if i != 0 && i % 4 == 0 {
+                    result += "  "
+                }
                 result += String(format: "% 3X", self[Cell(index) + Cell(i)] as Byte)
             }
+            result += " | "
             for i in 0..<16 {
+                if i != 0 && i % 4 == 0 {
+                    result += " "
+                }
                 let character = self[Cell(index) + Cell(i)] as Byte
                 if character >= Character.space && character < Character.delete {
                     result += String(format: "%c", character)
@@ -144,35 +154,5 @@ class Memory {
         }
         return result
     }
-
-//    func dump (from: Cell, to: Cell) {
-//        var address: Cell = from
-//        let count = 16
-//        print("       ", separator: "", terminator: "")
-//        for index in (0..<count) {
-//            print(String(format: "| %3d   ", index), separator: "", terminator: "")
-//        }
-//        print()
-//        print("---------", separator: "", terminator: "")
-//        for _ in (0..<count) {
-//            print("--------", separator: "", terminator: "")
-//        }
-//        print()
-//
-//        while address < to {
-//            print(String(format: "% 6d ", address), separator: "", terminator: "")
-//            for index in (0..<count) {
-//                let b: Byte = self[address + Cell(index)]
-//                print(String(format: "| %3d ", b), separator: "", terminator: "")
-//                if b > 31 && b < 127 {
-//                    print(String(format: "%c ", b), separator: "", terminator: "")
-//                } else {
-//                    print("  ", separator: "", terminator: "")
-//                }
-//            }
-//            print()
-//            address += Cell(count)
-//        }
-//    }
 }
 

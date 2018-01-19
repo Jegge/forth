@@ -14,7 +14,7 @@ typealias Code = (() throws -> Void)
 
 struct Text {
     let address: Cell
-    let length: Byte
+    let length: Cell
 }
 
 struct Flags {
