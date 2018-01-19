@@ -737,3 +737,11 @@ definitions, not in immediate mode.
 
 \ TODO: FORGET
 \ LATEST @ SEE
+
+( show banner )
+: WELCOME
+    ." JEGGE'S FORTH VERSION " VERSION . CR
+    ." OK" CR
+;
+WELCOME
+HIDE WELCOME

@@ -599,7 +599,6 @@ class Machine {
         self.nextIp = self.quit
         self.state = State.immediate
         if self.dictionary.isDirty(word: self.dictionary.latest) {
-            print("REMOVED LATEST")
             self.dictionary.removeLatest()
         }
     }
