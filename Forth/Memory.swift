@@ -135,19 +135,25 @@ class Memory {
                 if i != 0 && i % 4 == 0 {
                     result += "  "
                 }
-                result += String(format: "% 3X", self[Cell(index) + Cell(i)] as Byte)
+                if Int(index) + Int(i) < address + length {
+                    result += String(format: "% 3X", self[Cell(index) + Cell(i)] as Byte)
+                } else {
+                    result += "   "
+                }
             }
             result += " | "
             for i in 0..<16 {
                 if i != 0 && i % 4 == 0 {
                     result += " "
                 }
-                let character = self[Cell(index) + Cell(i)] as Byte
-                if character >= Character.space && character < Character.delete {
-                    result += String(format: "%c", character)
-                } else {
-                    result += "."
-                }
+                if Int(index) + Int(i) < address + length {
+                    let character = self[Cell(index) + Cell(i)] as Byte
+                    if character >= Character.space && character < Character.delete {
+                        result += String(format: "%c", character)
+                    } else {
+                        result += "."
+                    }
+                } 
             }
             index += 16
             result += "\n"
