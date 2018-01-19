@@ -303,7 +303,7 @@ class Machine {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
             let name = self.memory[Text(address: address, length: length)]
-            let link = self.dictionary.find(byName: name)
+            let link = self.dictionary.find(name)
 //            print(" --- FIND: \(String(ascii: name)) -> \(link)")
             try self.pstack.push(link)
         }
@@ -410,11 +410,11 @@ class Machine {
         }
         _ = self.dictionary.define(word: "SEE") {
             let name = self.word()
-            let word = self.dictionary.find(byName: name)
+            let word = self.dictionary.find(name)
             if word == 0 {
                 throw RuntimeError.seeUnknownWord(name)
             }
-            self.system.print(self.dictionary.decompile(word: word) + "\n", error: false)
+            self.system.print(self.dictionary.see(word: word) + "\n", error: false)
         }
         _ = self.dictionary.define(word: "WORDS") {
             self.system.print(self.dictionary.words().joined(separator: " ") + "\n", error: false)
@@ -454,7 +454,7 @@ class Machine {
                 return
             }
 
-            let link = self.dictionary.find(byName: name)
+            let link = self.dictionary.find(name)
             //print(" --- INTERPRETER READ: '\(String(ascii: name))'")
 
             if link != 0 { // it's in the dictionary
@@ -607,17 +607,18 @@ class Machine {
 extension Machine: CustomStringConvertible {
     var description: String {
         let word: Cell = self.dictionary.cfat(at: self.memory[self.nextIp])
-        var name = String(ascii: self.dictionary.name(of: word))
+        var name = String(ascii: self.dictionary.id(of: word))
         if name == "LIT" || name == "BRANCH" || name == "0BRANCH" {
-            let data: Cell = self.memory[self.nextIp + Memory.Size.cell]
-            name += " \(data)"
+            name += " \(self.memory[self.nextIp + Memory.Size.cell] as Cell)"
+        }
+        if name == "LITSTRING" {
+            name += " \(self.memory[self.nextIp + Memory.Size.cell] as Cell) ..."
         }
         name = name.padding(toLength: 16, withPad: " ", startingAt: 0)
         let ip = "\(self.nextIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
         let pst = "\(self.pstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
         let rst = "\(self.rstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
-        //let latest = self.dictionary.description(ofWord: self.dictionary.latest)
-        return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst)" //" | LATEST: \(latest)"
+        return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst) | S: \(self.state == State.immediate ? "I" : "C")"
     }
 }
 

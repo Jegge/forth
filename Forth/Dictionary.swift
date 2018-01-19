@@ -43,28 +43,16 @@ class Dictionary {
         return ((self.memory[word + Memory.Size.cell] & ~Flags.lenmask) & Flags.dirty) == Flags.dirty
     }
 
-    func name(of word: Cell) -> [Byte] {
+    func id(of word: Cell) -> [Byte] {
         let flags: Byte = self.memory[word + Memory.Size.cell]
         return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.byte, length: Cell(flags & Flags.lenmask))]
     }
 
-    func word(after word: Cell) -> Cell {
-        var pointer = self.latest
-        while pointer != 0 {
-            if self.memory[pointer] == word {
-                return pointer
-            }
-            pointer = self.memory[pointer]
-        }
-        return 0
-    }
-
-    func find(byName name: [Byte]) -> Cell {
+    func find(_ name: [Byte]) -> Cell {
         var word = self.latest
         while word != 0 {
-            let label = self.name(of: word)
+            let label = self.id(of: word)
             if label == name && !isHidden(word: word) {
-            //if label == name && (flags(of: word) & Flags.hidden) != Flags.hidden {
                 return word
             }
             word = self.memory[word]
@@ -72,19 +60,20 @@ class Dictionary {
         return 0
     }
 
-    func decompile(word: Cell) -> String {
-        var result = ": \(String(ascii: self.name(of: word))) \(self.isImmediate(word: word) ? "IMMEDIATE " : "")"
+    func see(word: Cell) -> String {
+        var result = ": \(String(ascii: self.id(of: word))) \(self.isImmediate(word: word) ? "IMMEDIATE " : "")"
 
         var address = self.tcfa(word: word)
         if let _ = self.code(of: address) {
             return result + " ;"
         }
+
         while true {
             let word = self.memory[address] as Cell
             if word == Dictionary.marker {
-                return result
+                return result + " ;"
             }
-            let name = String(ascii: self.name(of: self.cfat(at: word)))
+            let name = String(ascii: self.id(of: self.cfat(at: word)))
             switch name {
             case "ENTER":
                 // ignore ENTER, is implied by :
@@ -92,7 +81,7 @@ class Dictionary {
             case "'":
                 // print the following instruction as a name
                 address += Memory.Size.cell
-                result += "\(name) \(String(ascii: self.name(of: self.cfat(at: self.memory[address])))) "
+                result += "\(name) \(String(ascii: self.id(of: self.cfat(at: self.memory[address])))) "
             case "LIT":
                 // print only the following instruction as a number
                 address += Memory.Size.cell
@@ -108,11 +97,9 @@ class Dictionary {
                 result += "S\" \(String(ascii: self.memory[Text(address: address + Memory.Size.cell, length: length)]))\" "
                 address = Memory.align(address: address + length)
             case "EXIT":
-                // write the last exit as ;
+                // omit exit, if it is the last word
                 if self.memory[address + Memory.Size.cell] != Dictionary.marker {
                     result += "\(name) "
-                } else {
-                    result += ";"
                 }
             default:
                 result += "\(name) "
@@ -121,12 +108,12 @@ class Dictionary {
         }
     }
 
-    func words () -> [String] {
+    func words() -> [String] {
         var result = Set<String>()
         var word = self.latest
         while word != 0 {
             if !self.isHidden(word: word) {
-                result.insert(String(ascii: self.name(of: word)))
+                result.insert(String(ascii: self.id(of: word)))
             }
             word = self.memory[word]
         }
