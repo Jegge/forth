@@ -35,9 +35,11 @@ struct Address {
     static let s0: Cell = 24
     static let buffer: Cell = 28
 
-    static let rstack: Cell = 512
-    static let pstack: Cell = 1024
-    static let dictionary: Cell = 1024
+    static let rstack: Cell = 4096
+    static let pstack: Cell = 8192
+    static let rstackSize: Cell = 4096 - 64
+    static let pstackSize: Cell = 4096
+    static let dictionary: Cell = 8192
 }
 
 struct State {

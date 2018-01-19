@@ -51,13 +51,13 @@ class Machine {
         }
     }
 
-    init (system: SystemProvided, chunk: Cell = 4096 * 4) {
+    init (system: SystemProvided, memory: Memory, rstack: Stack, pstack: Stack, dictionary: Dictionary) {
         self.system = system
-        self.memory = Memory(chunk: chunk)
-        self.rstack = Stack(memory: self.memory, address: Address.rstack, size: 256, addressAddress: Address.r0)
-        self.pstack = Stack(memory: self.memory, address: Address.pstack, size: 512, addressAddress: Address.s0)
+        self.memory = memory
+        self.rstack = rstack
+        self.pstack = pstack
+        self.dictionary = dictionary
         self.memory.here = Address.dictionary
-        self.dictionary = Dictionary(memory: self.memory)
 
         _ = self.dictionary.define(variable: "HERE", address: Address.here, stack: self.pstack)
         _ = self.dictionary.define(variable: "STATE", value: State.immediate, address: Address.state, stack: self.pstack)
@@ -589,15 +589,19 @@ class Machine {
                 }
             } catch {
                 self.system.print("ERROR: \(error)\n", error: false)
-                self.interrupt()
+                self.interrupt(hard: false)
             }
         }
     }
 
-    func interrupt() {
+    func interrupt(hard: Bool) {
         self.buffer = nil
         self.nextIp = self.quit
         self.state = State.immediate
+        if hard {
+            self.pstack.pointer = self.pstack.address
+            self.rstack.pointer = self.rstack.address
+        }
         if self.dictionary.isDirty(word: self.dictionary.latest) {
             self.dictionary.removeLatest()
         }

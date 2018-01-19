@@ -13,6 +13,7 @@ class Stack {
     private let memory: Memory
     private let size: Cell
     private let addressAddress: Cell
+    private let name: String
 
     var address: Cell {
         set {
@@ -25,9 +26,10 @@ class Stack {
 
     var pointer: Cell
 
-    init(memory: Memory, address: Cell, size: Cell, addressAddress: Cell) {
+    init(memory: Memory, address: Cell, size: Cell, addressAddress: Cell, name: String) {
         self.memory = memory
         self.size = size
+        self.name = name
         self.addressAddress = addressAddress
         self.pointer = address
         self.address = address
@@ -35,7 +37,7 @@ class Stack {
 
     func push(_ cell: Cell) throws {
         if self.pointer <= self.address - self.size {
-            throw RuntimeError.stackOverflow
+            throw RuntimeError.stackOverflow(self.name)
         }
         self.pointer -= Memory.Size.cell
         self.memory[self.pointer] = cell
@@ -43,7 +45,7 @@ class Stack {
 
     func pop() throws -> Cell {
         if self.pointer >= self.address {
-            throw RuntimeError.stackDepleted
+            throw RuntimeError.stackDepleted(self.name)
         }
         let cell: Cell = self.memory[self.pointer]
         self.pointer += Memory.Size.cell

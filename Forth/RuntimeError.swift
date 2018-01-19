@@ -9,22 +9,20 @@
 import Foundation
 
 enum RuntimeError: Error {
-    case stackDepleted
-    case stackOverflow
-    case expectedWord
-    case parseError(_:[Byte])
-    case seeUnknownWord(_:[Byte])
+    case stackDepleted(_: String)
+    case stackOverflow(_: String)
+
+    case parseError(_: [Byte])
+    case seeUnknownWord(_: [Byte])
 }
 
 extension RuntimeError: CustomStringConvertible {
     var description: String {
         switch self {
-        case .stackDepleted:
-            return "Expected an element on the stack, but the stack was empty."
-        case .stackOverflow:
-            return "Tried to put an element on the stack, but the stack was full."
-        case .expectedWord:
-            return "Expected to read a word."
+        case .stackDepleted(let name):
+            return "Expected an element on the stack '\(name)', but the stack was empty."
+        case .stackOverflow(let name):
+            return "Tried to put an element on the stack '\(name)', but the stack was full."
         case .parseError(let token):
             return "Parse error: '\(String(ascii: token))' is neither a known word nor a number literal."
         case .seeUnknownWord(let name):

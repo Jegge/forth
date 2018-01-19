@@ -61,7 +61,7 @@
 : RECURSE IMMEDIATE
     LATEST @    \ LATEST points to the word being compiled at the moment
     >CFA        \ get the codeword
-    ,        \ compile it
+    ,           \ compile it
 ;
 
 \    CONTROL STRUCTURES ----------------------------------------------------------------------
@@ -740,8 +740,8 @@ definitions, not in immediate mode.
 
 ( show banner )
 : WELCOME
-    ." JEGGE'S FORTH VERSION " VERSION . CR
-    ." OK" CR
+    ." Jegge's fifth Forth v" VERSION . CR
+    ." ^D to quit." CR
 ;
 WELCOME
 HIDE WELCOME
