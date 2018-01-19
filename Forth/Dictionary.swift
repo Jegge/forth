@@ -39,6 +39,9 @@ class Dictionary {
     func isImmediate(word: Cell) -> Bool {
         return ((self.memory[word + Memory.Size.cell] & ~Flags.lenmask) & Flags.immediate) == Flags.immediate
     }
+    func isDirty(word: Cell) -> Bool {
+        return ((self.memory[word + Memory.Size.cell] & ~Flags.lenmask) & Flags.dirty) == Flags.dirty
+    }
 
     func name(of word: Cell) -> [Byte] {
         let flags: Byte = self.memory[word + Memory.Size.cell]
@@ -70,11 +73,11 @@ class Dictionary {
     }
 
     func decompile(word: Cell) -> String {
-        var result = "\(String(ascii: self.name(of: word))) \(self.isImmediate(word: word) ? "IMMEDIATE " : "")"
+        var result = ": \(String(ascii: self.name(of: word))) \(self.isImmediate(word: word) ? "IMMEDIATE " : "")"
 
         var address = self.tcfa(word: word)
         if let _ = self.code(of: address) {
-            return result + "<native> ;"
+            return result + " ;"
         }
         while true {
             let word = self.memory[address] as Cell
@@ -84,21 +87,25 @@ class Dictionary {
             let name = String(ascii: self.name(of: self.cfat(at: word)))
             switch name {
             case "ENTER":
-                // prepend docol if existing
-                result = ": " + result
+                // ignore ENTER, is implied by :
+                break
             case "'":
                 // print the following instruction as a name
                 address += Memory.Size.cell
                 result += "\(name) \(String(ascii: self.name(of: self.cfat(at: self.memory[address])))) "
-            case "LIT", "BRANCH", "0BRANCH":
-                // print the following instruction as a number
+            case "LIT":
+                // print only the following instruction as a number
+                address += Memory.Size.cell
+                result += "\(self.memory[address] as Cell) "
+            case "BRANCH", "0BRANCH":
+                // print the name and the following instruction as a number
                 address += Memory.Size.cell
                 result += "\(name) \(self.memory[address] as Cell) "
             case "LITSTRING":
                 // get the following instructions as a length and the content of a string
                 address += Memory.Size.cell
                 let length = self.memory[address] as Cell
-                result += "\(name) \(length) \(String(ascii: self.memory[Text(address: address + Memory.Size.cell, length: length)])) "
+                result += "S\" \(String(ascii: self.memory[Text(address: address + Memory.Size.cell, length: length)]))\" "
                 address = Memory.align(address: address + length)
             case "EXIT":
                 // write the last exit as ;
@@ -142,6 +149,14 @@ class Dictionary {
             word = self.memory[word]
         }
         return 0
+    }
+
+    func removeLatest() {
+        if self.latest == 0 {
+            return
+        }
+        self.memory.here = self.latest
+        self.latest = self.memory[self.latest]
     }
 
     func create(word name: [Byte], immediate: Bool) -> Cell {

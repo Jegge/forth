@@ -636,6 +636,12 @@ For example: LATEST @ ID. would print the name of the last word that was defined
     F_IMMED AND    ( mask the F_IMMED flag and return it (as a truth value) )
 ;
 
+: ?DIRTY
+    C+              ( skip over the link pointer )
+    C@              ( get the flags/length byte )
+    F_DIRTY AND     ( mask the F_DIRTY flag and return it (as a truth value) )
+;
+
 (
 CASE ----------------------------------------------------------------------
 
@@ -727,7 +733,6 @@ definitions, not in immediate mode.
         [COMPILE] THEN
     REPEAT
 ;
-
 
 
 \ TODO: FORGET

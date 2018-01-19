@@ -20,6 +20,7 @@ struct Text {
 struct Flags {
     static let none: Byte = 0x00
     static let immediate: Byte = 0x80
+    static let dirty: Byte = 0x40
     static let hidden: Byte = 0x20
     static let lenmask: Byte = 0x1f
 }

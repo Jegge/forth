@@ -69,6 +69,7 @@ class Machine {
         _ = self.dictionary.define(constant: "VERSION", value: Constants.version, stack: self.pstack)
         let rz = self.dictionary.define(constant: "R0", value: Address.rstack, stack: self.pstack)
         _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Flags.immediate), stack: self.pstack)
+        _ = self.dictionary.define(constant: "F_DIRTY", value: Cell(Flags.dirty), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Flags.hidden), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_LENMASK", value: Cell(Flags.lenmask), stack: self.pstack)
         _ = self.dictionary.define(constant: "MARKER", value: Dictionary.marker, stack: self.pstack)
@@ -367,6 +368,10 @@ class Machine {
             let address = try self.pstack.pop()
             try self.pstack.push(self.dictionary.tcfa(word: address))
         }
+        _ = self.dictionary.define(word: "CFA>") {
+            let address = try self.pstack.pop()
+            try self.pstack.push(self.dictionary.cfat(at: address))
+        }
         _ = self.dictionary.define(word: ">DFA", words: [ enter, tcfa, inccell, exit ])
 
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
@@ -375,6 +380,10 @@ class Machine {
         let hidden = self.dictionary.define(word: "HIDDEN") {
             self.memory[try self.pstack.pop() + Memory.Size.cell] ^= Flags.hidden
         }
+        let dirty = self.dictionary.define(word: "DIRTY") {
+            self.memory[try self.pstack.pop() + Memory.Size.cell] ^= Flags.dirty
+        }
+
         _ = self.dictionary.define(word: "HIDE", words: [ enter, word, find, hidden, exit ])
         
         let create = self.dictionary.define(word: "CREATE") {
@@ -400,9 +409,10 @@ class Machine {
             try self.pstack.push(word)
         }
         _ = self.dictionary.define(word: "SEE") {
-            let word = try self.pstack.pop()
+            let name = self.word()
+            let word = self.dictionary.find(byName: name)
             if word == 0 {
-                throw RuntimeError.seeUnknownWord
+                throw RuntimeError.seeUnknownWord(name)
             }
             self.system.print(self.dictionary.decompile(word: word) + "\n", error: false)
         }
@@ -417,8 +427,24 @@ class Machine {
         let comma = self.dictionary.define(word: ",") {
             self.memory.append(cell: try self.pstack.pop())
         }
-        _ = self.dictionary.define(word: ":", words: [ enter, word, create, lit, enter, comma, latest, fetch, hidden, tocompile, exit ])
-        _ = self.dictionary.define(word: ";", immediate: true, words: [ enter, lit, exit, comma, lit, Dictionary.marker, comma, latest, fetch, hidden, toimmediate, exit ])
+        _ = self.dictionary.define(word: ":", words: [
+            enter,
+            word, create,
+            lit, enter, comma,
+            latest, fetch, hidden,
+            latest, fetch, dirty,
+            tocompile,
+            exit
+        ])
+        _ = self.dictionary.define(word: ";", immediate: true, words: [
+            enter,
+            lit, exit, comma,
+            lit, Dictionary.marker, comma,
+            latest, fetch, hidden,
+            latest, fetch, dirty,
+            toimmediate,
+            exit
+        ])
 
         let interpret = self.dictionary.define(word: "INTERPRET") {
 
@@ -563,8 +589,7 @@ class Machine {
                 }
             } catch {
                 self.system.print("ERROR: \(error)\n", error: false)
-                self.buffer = nil
-                self.nextIp = self.quit
+                self.interrupt()
             }
         }
     }
@@ -572,6 +597,11 @@ class Machine {
     func interrupt() {
         self.buffer = nil
         self.nextIp = self.quit
+        self.state = State.immediate
+        if self.dictionary.isDirty(word: self.dictionary.latest) {
+            print("REMOVED LATEST")
+            self.dictionary.removeLatest()
+        }
     }
 }
 
