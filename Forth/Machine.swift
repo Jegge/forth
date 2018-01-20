@@ -378,6 +378,9 @@ class Machine {
             try self.pstack.push(self.dictionary.cfat(at: address))
         }
         _ = self.dictionary.define(word: ">DFA", words: [ enter, tcfa, inccell, exit ])
+        _ = self.dictionary.define(word: "CELLS") {
+            try self.pstack.push(try self.pstack.pop() * Memory.Size.cell)
+        }
 
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
             self.memory[self.dictionary.latest + Memory.Size.cell] ^= Flags.immediate
@@ -597,18 +600,15 @@ class Machine {
                 }
             } catch {
                 self.system.print("ERROR: \(error)\n", error: false)
-                self.interrupt(hard: false)
+                self.interrupt()
             }
         }
     }
 
-    func interrupt(hard: Bool) {
+    func interrupt() {
         self.buffer = nil
         self.nextIp = self.quit
         self.state = State.immediate
-        if hard {
-            self.pstack.pointer = self.pstack.address
-        }
         if self.dictionary.isDirty(word: self.dictionary.latest) {
             self.dictionary.removeLatest()
         }

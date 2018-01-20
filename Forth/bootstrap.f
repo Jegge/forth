@@ -523,8 +523,6 @@ leaves the dictionary entry:
     HERE +!        ( adds n to HERE, after this the old value of HERE is still on the stack )
 ;
 
-: CELLS ( n -- n ) 4 * ;
-
 : VARIABLE
     1 CELLS ALLOT   ( allocate 1 cell of memory, push the pointer to this memory )
     WORD CREATE     ( make the dictionary entry (the name follows VARIABLE) )

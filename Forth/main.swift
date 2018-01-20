@@ -31,7 +31,7 @@ let machine = Machine(system: system, memory: memory, rstack: rstack, pstack: ps
 
 signal(SIGINT) { _ in
     print(" - INTERRUPTED")
-    machine.interrupt(hard: true)
+    machine.interrupt()
 }
 
 machine.run()
