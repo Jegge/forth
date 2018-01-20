@@ -617,15 +617,8 @@ class Machine {
 
 extension Machine: CustomStringConvertible {
     var description: String {
-        let word: Cell = self.dictionary.cfat(at: self.memory[self.nextIp])
-        var name = String(ascii: self.dictionary.id(of: word))
-        if name == "LIT" || name == "BRANCH" || name == "0BRANCH" {
-            name += " \(self.memory[self.nextIp + Memory.Size.cell] as Cell)"
-        }
-        if name == "LITSTRING" {
-            name += " \(self.memory[self.nextIp + Memory.Size.cell] as Cell) ..."
-        }
-        name = name.padding(toLength: 16, withPad: " ", startingAt: 0)
+        var address = self.nextIp
+        let name = self.dictionary.see(at: &address).padding(toLength: 20, withPad: " ", startingAt: 0)
         let ip = "\(self.nextIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
         let pst = "\(self.pstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
         let rst = "\(self.rstack)".padding(toLength: 20, withPad: " ", startingAt: 0)

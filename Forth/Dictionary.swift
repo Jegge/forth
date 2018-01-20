@@ -60,10 +60,48 @@ class Dictionary {
         return 0
     }
 
+    func see(at address: inout Cell) -> String {
+        let word = self.memory[address] as Cell
+        let name = String(ascii: self.id(of: self.cfat(at: word)))
+        var result = ""
+        switch name {
+        case "ENTER":
+            // ignore ENTER, is implied by :
+            break
+        case "'":
+            // print the following instruction as a name
+            address += Memory.Size.cell
+            result = " \(name) \(String(ascii: self.id(of: self.cfat(at: self.memory[address]))))"
+        case "LIT":
+            // print only the following instruction as a number
+            address += Memory.Size.cell
+            result = " \(self.memory[address] as Cell)"
+        case "BRANCH", "0BRANCH":
+            // print the name and the following instruction as a number
+            address += Memory.Size.cell
+            result = " \(name) \(self.memory[address] as Cell)"
+        case "LITSTRING":
+            // get the following instructions as a length and the content of a string
+            address += Memory.Size.cell
+            let length = self.memory[address] as Cell
+            result = " S\" \(String(ascii: self.memory[Text(address: address + Memory.Size.cell, length: length)]))\""
+            address = Memory.align(address: address + length)
+        case "EXIT":
+            // omit exit, if it is the last word
+            if self.memory[address + Memory.Size.cell] != Dictionary.marker {
+                result = " \(name)"
+            }
+        default:
+            result = " \(name)"
+        }
+        address += Memory.Size.cell
+        return result
+    }
+
     func see(word: Cell) -> String {
         var result = ": \(String(ascii: self.id(of: word)))\(self.isImmediate(word: word) ? " IMMEDIATE" : "")"
-
         var address = self.tcfa(word: word)
+
         if let _ = self.code(of: address) {
             return result + " ;"
         }
@@ -73,38 +111,7 @@ class Dictionary {
             if word == Dictionary.marker {
                 return result + " ;"
             }
-            let name = String(ascii: self.id(of: self.cfat(at: word)))
-            switch name {
-            case "ENTER":
-                // ignore ENTER, is implied by :
-                break
-            case "'":
-                // print the following instruction as a name
-                address += Memory.Size.cell
-                result += " \(name) \(String(ascii: self.id(of: self.cfat(at: self.memory[address]))))"
-            case "LIT":
-                // print only the following instruction as a number
-                address += Memory.Size.cell
-                result += " \(self.memory[address] as Cell)"
-            case "BRANCH", "0BRANCH":
-                // print the name and the following instruction as a number
-                address += Memory.Size.cell
-                result += " \(name) \(self.memory[address] as Cell)"
-            case "LITSTRING":
-                // get the following instructions as a length and the content of a string
-                address += Memory.Size.cell
-                let length = self.memory[address] as Cell
-                result += " S\" \(String(ascii: self.memory[Text(address: address + Memory.Size.cell, length: length)]))\""
-                address = Memory.align(address: address + length)
-            case "EXIT":
-                // omit exit, if it is the last word
-                if self.memory[address + Memory.Size.cell] != Dictionary.marker {
-                    result += " \(name)"
-                }
-            default:
-                result += " \(name)"
-            }
-            address += Memory.Size.cell
+            result += self.see(at: &address)
         }
     }
 
