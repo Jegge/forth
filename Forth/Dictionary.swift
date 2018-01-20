@@ -61,7 +61,7 @@ class Dictionary {
     }
 
     func see(word: Cell) -> String {
-        var result = ": \(String(ascii: self.id(of: word))) \(self.isImmediate(word: word) ? "IMMEDIATE " : "")"
+        var result = ": \(String(ascii: self.id(of: word)))\(self.isImmediate(word: word) ? " IMMEDIATE" : "")"
 
         var address = self.tcfa(word: word)
         if let _ = self.code(of: address) {
@@ -81,28 +81,28 @@ class Dictionary {
             case "'":
                 // print the following instruction as a name
                 address += Memory.Size.cell
-                result += "\(name) \(String(ascii: self.id(of: self.cfat(at: self.memory[address])))) "
+                result += " \(name) \(String(ascii: self.id(of: self.cfat(at: self.memory[address]))))"
             case "LIT":
                 // print only the following instruction as a number
                 address += Memory.Size.cell
-                result += "\(self.memory[address] as Cell) "
+                result += " \(self.memory[address] as Cell)"
             case "BRANCH", "0BRANCH":
                 // print the name and the following instruction as a number
                 address += Memory.Size.cell
-                result += "\(name) \(self.memory[address] as Cell) "
+                result += " \(name) \(self.memory[address] as Cell)"
             case "LITSTRING":
                 // get the following instructions as a length and the content of a string
                 address += Memory.Size.cell
                 let length = self.memory[address] as Cell
-                result += "S\" \(String(ascii: self.memory[Text(address: address + Memory.Size.cell, length: length)]))\" "
+                result += " S\" \(String(ascii: self.memory[Text(address: address + Memory.Size.cell, length: length)]))\""
                 address = Memory.align(address: address + length)
             case "EXIT":
                 // omit exit, if it is the last word
                 if self.memory[address + Memory.Size.cell] != Dictionary.marker {
-                    result += "\(name) "
+                    result += " \(name)"
                 }
             default:
-                result += "\(name) "
+                result += " \(name)"
             }
             address += Memory.Size.cell
         }

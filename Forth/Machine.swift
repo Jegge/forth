@@ -65,6 +65,8 @@ class Machine {
         _ = self.dictionary.define(variable: "BASE", value: 10, address: Address.base, stack: self.pstack)
         _ = self.dictionary.define(variable: "TRACE", value: 0, address: Address.trace, stack: self.pstack)
         _ = self.dictionary.define(variable: "S0", address: Address.s0, stack: self.pstack)
+        _ = self.dictionary.define(variable: "XT0", value: 0, address: Address.xt0, stack: self.pstack)
+        _ = self.dictionary.define(variable: "XT1", value: 0, address: Address.xt1, stack: self.pstack)
 
         _ = self.dictionary.define(constant: "VERSION", value: Constants.version, stack: self.pstack)
         let rz = self.dictionary.define(constant: "R0", value: Address.rstack, stack: self.pstack)
@@ -445,6 +447,12 @@ class Machine {
             toimmediate,
             exit
         ])
+        _ = self.dictionary.define(word: "EXECUTE") {
+            // next will be on pstack, then back to the original nextIp
+            self.memory[Address.xt0] = try self.pstack.pop()
+            self.memory[Address.xt1] = self.nextIp + Memory.Size.cell
+            self.nextIp = Address.xt0 - Memory.Size.cell
+        }
 
         let interpret = self.dictionary.define(word: "INTERPRET") {
 
@@ -513,10 +521,11 @@ class Machine {
         var buffer: [Byte] = []
         var character: Byte = 0
 
-        // skip spaces and comments
+        // skip spaces, tabs and comments
         while (true) {
             character = self.key()
-            while character == Character.space {
+            while character == Character.space ||
+                  character == Character.tab {
                 character = self.key()
             }
             if character == Character.backslash {
@@ -528,11 +537,12 @@ class Machine {
             }
         }
 
-        // read word until space or newline or comment
+        // read word until space, tab or newline
         while character != Character.space &&
-            character != Character.newline {
-                buffer.append(character)
-                character = self.key()
+              character != Character.tab &&
+              character != Character.newline {
+            buffer.append(character)
+            character = self.key()
         }
 
         return Array(buffer[0..<min(Constants.wordlen, buffer.count)])

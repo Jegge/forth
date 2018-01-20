@@ -33,12 +33,15 @@ struct Address {
     static let trace: Cell = 16
     static let r0: Cell = 20
     static let s0: Cell = 24
-    static let buffer: Cell = 28
+    static let xt0: Cell = 28
+    static let xt1: Cell = 32
+    static let buffer: Cell = 36
 
     static let rstack: Cell = 4096
     static let pstack: Cell = 8192
     static let rstackSize: Cell = 4096 - 64
     static let pstackSize: Cell = 4096
+    
     static let dictionary: Cell = 8192
 }
 
@@ -48,6 +51,7 @@ struct State {
 }
 
 extension Character {
+    static let tab: Byte = 9
     static let space: Byte = 32
     static let newline: Byte = 10
     static let backslash: Byte = 92
