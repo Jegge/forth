@@ -744,3 +744,11 @@ definitions, not in immediate mode.
 ;
 WELCOME
 HIDE WELCOME
+
+
+
+
+: DOUBLE DUP + ;
+: SLOW WORD FIND >CFA EXECUTE ;
+\ 5 SLOW DOUBLE . CR    \ prints 10
+\ 5 WORD DOUBLE FIND >CFA EXECUTE . CR

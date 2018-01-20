@@ -473,7 +473,7 @@ class Machine {
                 let cfa = self.dictionary.tcfa(word: word)
                 if self.state == State.immediate || self.dictionary.isImmediate(word: word) {
                     self.memory[Address.ip0] = cfa
-                    self.memory[Address.ip1] = self.nextIp + Memory.Size.cell
+                    self.memory[Address.ip1] = self.nextIp
                     self.nextIp = Address.ip0 - Memory.Size.cell
                 } else {
                     self.memory.append(cell: cfa)
