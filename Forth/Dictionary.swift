@@ -107,8 +107,7 @@ class Dictionary {
         }
 
         while true {
-            let word = self.memory[address] as Cell
-            if word == Dictionary.marker {
+            if self.memory[address] == Dictionary.marker {
                 return result + " ;"
             }
             result += self.see(at: &address)

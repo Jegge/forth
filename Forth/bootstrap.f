@@ -732,9 +732,100 @@ definitions, not in immediate mode.
     REPEAT
 ;
 
+: :NONAME
+    0 0 CREATE    ( create a word with no name - we need a dictionary header because ; expects it )
+    HERE @        ( current HERE value is the address of the codeword, ie. the xt )
+    DOCOL ,        ( compile DOCOL (the codeword) )
+    ]        ( go into compile mode )
+;
 
-\ TODO: FORGET
-\ LATEST @ SEE
+: ['] IMMEDIATE
+    ' LIT ,        ( compile LIT )
+;
+
+
+: EXCEPTION-MARKER
+    RDROP            ( drop the original parameter stack pointer )
+    0            ( there was no exception, this is the normal return path )
+;
+
+: CATCH        ( xt -- exn? )
+    DSP@ C+ >R        ( save parameter stack pointer (+4 because of xt) on the return stack )
+    ' EXCEPTION-MARKER C+    ( push the address of the RDROP inside EXCEPTION-MARKER ... )
+    >R            ( ... on to the return stack so it acts like a return address )
+    EXECUTE            ( execute the nested function )
+;
+
+: THROW        ( n -- )
+    ?DUP IF            ( only act if the exception code <> 0 )
+        RSP@             ( get return stack pointer )
+        BEGIN
+            DUP R0 C- <        ( RSP < R0 )
+        WHILE
+            DUP @            ( get the return stack entry )
+            ' EXCEPTION-MARKER C+ = IF    ( found the EXCEPTION-MARKER on the return stack )
+                C+            ( skip the EXCEPTION-MARKER on the return stack )
+                RSP!            ( restore the return stack pointer )
+
+                ( Restore the parameter stack. )
+                DUP DUP DUP        ( reserve some working space so the stack for this word
+                                 doesn't coincide with the part of the stack being restored )
+                R>            ( get the saved parameter stack pointer | n dsp )
+                C-            ( reserve space on the stack to store n )
+                SWAP OVER        ( dsp n dsp )
+                !            ( write n on the stack )
+                DSP! EXIT        ( restore the parameter stack pointer, immediately exit )
+            THEN
+            C+
+        REPEAT
+
+        ( No matching catch - print a message and restart the INTERPRETer. )
+        DROP
+
+        CASE
+        0 1- OF    ( ABORT )
+            ." ABORTED" CR
+        ENDOF
+        ( default case )
+        ." UNCAUGHT THROW "
+            DUP . CR
+        ENDCASE
+        QUIT
+    THEN
+;
+
+: ABORT        ( -- )
+    0 1- THROW
+;
+
+( Print a stack trace by walking up the return stack. )
+: PRINT-STACK-TRACE
+    RSP@                ( start at caller of this function )
+    BEGIN
+        DUP R0 C- <        ( RSP < R0 )
+    WHILE
+        DUP @            ( get the return stack entry )
+        CASE
+        ' EXCEPTION-MARKER C+ OF    ( is it the exception stack frame? )
+            ." CATCH ( DSP="
+            C+ DUP @ U.        ( print saved stack pointer )
+            ." ) "
+        ENDOF
+        ( default case )
+            DUP
+            CFA>            ( look up the codeword to get the dictionary entry )
+            ?DUP IF            ( and print it )
+                2DUP            ( dea addr dea )
+                ID.            ( print word from dictionary entry )
+                [ CHAR + ] LITERAL EMIT
+                SWAP >DFA C+ - .    ( print offset )
+            THEN
+        ENDCASE
+        C+            ( move up the stack )
+    REPEAT
+    DROP
+    CR
+;
 
 ( show banner )
 : WELCOME
@@ -742,13 +833,20 @@ definitions, not in immediate mode.
     ." ^D to quit." CR
     CR
 ;
+
+
+
+
+
 WELCOME
 HIDE WELCOME
 
 
 
+\ TODO: FORGET
+\ LATEST @ SEE
 
-: DOUBLE DUP + ;
-: SLOW WORD FIND >CFA EXECUTE ;
+\ : DOUBLE DUP + ;
+\ : SLOW WORD FIND >CFA EXECUTE ;
 \ 5 SLOW DOUBLE . CR    \ prints 10
 \ 5 WORD DOUBLE FIND >CFA EXECUTE . CR

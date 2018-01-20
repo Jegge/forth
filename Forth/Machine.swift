@@ -625,4 +625,3 @@ extension Machine: CustomStringConvertible {
         return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst) | S: \(self.state == State.immediate ? "I" : "C")"
     }
 }
-
