@@ -67,6 +67,8 @@ class Machine {
         _ = self.dictionary.define(variable: "S0", address: Address.s0, stack: self.pstack)
         _ = self.dictionary.define(variable: "XT0", value: 0, address: Address.xt0, stack: self.pstack)
         _ = self.dictionary.define(variable: "XT1", value: 0, address: Address.xt1, stack: self.pstack)
+        _ = self.dictionary.define(variable: "IP0", value: 0, address: Address.ip0, stack: self.pstack)
+        _ = self.dictionary.define(variable: "IP1", value: 0, address: Address.ip1, stack: self.pstack)
 
         _ = self.dictionary.define(constant: "VERSION", value: Constants.version, stack: self.pstack)
         let rz = self.dictionary.define(constant: "R0", value: Address.rstack, stack: self.pstack)
@@ -80,6 +82,7 @@ class Machine {
             try self.rstack.push(self.oldIp)
         }
         _ = self.dictionary.define(constant: "DOCOL", value: enter, stack: self.pstack)
+
         let exit = self.dictionary.define(word: "EXIT") {
             self.nextIp = try self.rstack.pop()
         }
@@ -306,7 +309,7 @@ class Machine {
             let address = try self.pstack.pop()
             let name = self.memory[Text(address: address, length: length)]
             let link = self.dictionary.find(name)
-//            print(" --- FIND: \(String(ascii: name)) -> \(link)")
+            //            print(" --- FIND: \(String(ascii: name)) -> \(link)")
             try self.pstack.push(link)
         }
         let toimmediate = self.dictionary.define(word: "[", immediate: true) {
@@ -387,7 +390,7 @@ class Machine {
         }
 
         _ = self.dictionary.define(word: "HIDE", words: [ enter, word, find, hidden, exit ])
-        
+
         let create = self.dictionary.define(word: "CREATE") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
@@ -437,7 +440,7 @@ class Machine {
             latest, fetch, dirty,
             tocompile,
             exit
-        ])
+            ])
         _ = self.dictionary.define(word: ";", immediate: true, words: [
             enter,
             lit, exit, comma,
@@ -446,7 +449,7 @@ class Machine {
             latest, fetch, dirty,
             toimmediate,
             exit
-        ])
+            ])
         _ = self.dictionary.define(word: "EXECUTE") {
             // next will be on pstack, then back to the original nextIp
             self.memory[Address.xt0] = try self.pstack.pop()
@@ -456,7 +459,7 @@ class Machine {
 
         let interpret = self.dictionary.define(word: "INTERPRET") {
 
-            self.memory[self.execAddress] = self.ignore
+            //self.memory[self.execAddress] = self.ignore
             let name = self.word()
             if name.count == 0 {
                 return
@@ -466,7 +469,9 @@ class Machine {
             if word != 0 { // it's in the dictionary
                 let cfa = self.dictionary.tcfa(word: word)
                 if self.state == State.immediate || self.dictionary.isImmediate(word: word) {
-                    self.memory[self.execAddress] = cfa
+                    self.memory[Address.ip0] = cfa
+                    self.memory[Address.ip1] = self.nextIp + Memory.Size.cell
+                    self.nextIp = Address.ip0 - Memory.Size.cell
                 } else {
                     self.memory.append(cell: cfa)
                 }
@@ -487,10 +492,7 @@ class Machine {
             throw RuntimeError.parseError(name)
         }
 
-        self.ignore = self.dictionary.define(word: "IGNORE") { /* intentionally left blank */ }
-        self.quit = self.dictionary.define(word: "QUIT", words: [ rz, rspstore, interpret, ignore, branch, Memory.Size.cell * -3 ])
-
-        self.execAddress = self.quit + Memory.Size.cell * 3
+        self.quit = self.dictionary.define(word: "QUIT", words: [ rz, rspstore, interpret, branch, Memory.Size.cell * -2 ])
         self.nextIp = quit
     }
 
@@ -525,8 +527,8 @@ class Machine {
         while (true) {
             character = self.key()
             while character == Character.space ||
-                  character == Character.tab {
-                character = self.key()
+                character == Character.tab {
+                    character = self.key()
             }
             if character == Character.backslash {
                 while character != Character.newline {
@@ -539,10 +541,10 @@ class Machine {
 
         // read word until space, tab or newline
         while character != Character.space &&
-              character != Character.tab &&
-              character != Character.newline {
-            buffer.append(character)
-            character = self.key()
+            character != Character.tab &&
+            character != Character.newline {
+                buffer.append(character)
+                character = self.key()
         }
 
         return Array(buffer[0..<min(Constants.wordlen, buffer.count)])

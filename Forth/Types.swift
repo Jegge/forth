@@ -35,11 +35,13 @@ struct Address {
     static let s0: Cell = 24
     static let xt0: Cell = 28
     static let xt1: Cell = 32
-    static let buffer: Cell = 36
+    static let ip0: Cell = 36
+    static let ip1: Cell = 40
+    static let buffer: Cell = 44
 
     static let rstack: Cell = 4096
     static let pstack: Cell = 8192
-    static let rstackSize: Cell = 4096 - 64
+    static let rstackSize: Cell = 4096 - 128
     static let pstackSize: Cell = 4096
     
     static let dictionary: Cell = 8192
