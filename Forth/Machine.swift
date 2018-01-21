@@ -601,13 +601,14 @@ class Machine {
             } catch {
                 self.system.print("ERROR: \(error)\n", error: false)
                 self.interrupt()
+                self.nextIp = self.quit
             }
         }
     }
 
     func interrupt() {
         self.buffer = nil
-        self.nextIp = self.quit
+        self.nextIp = self.quit - Memory.Size.cell
         self.state = State.immediate
         if self.dictionary.isDirty(word: self.dictionary.latest) {
             self.dictionary.removeLatest()

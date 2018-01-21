@@ -827,6 +827,11 @@ definitions, not in immediate mode.
     CR
 ;
 
+: BYE
+    0
+    SYS-EXIT
+;
+
 ( show banner )
 : WELCOME
     ." Jegge's fifth Forth v" VERSION . CR
