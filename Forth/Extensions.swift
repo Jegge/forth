@@ -19,7 +19,7 @@ extension String {
 
 extension Character {
     var ascii: Byte? {
-        let value = String(self).unicodeScalars.filter{ $0.isASCII }.first?.value
+        let value = String(self).unicodeScalars.filter { $0.isASCII }.first?.value
         return value != nil ? Byte(value!) : nil
     }
 }

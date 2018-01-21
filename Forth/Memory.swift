@@ -144,7 +144,7 @@ class Memory {
         bytes.forEach { self.append(byte: $0) }
     }
 
-    func dump (address: Cell, length: Cell) -> String {
+    func dump(address: Cell, length: Cell) -> String {
         var result = ""
         var index = address
         while index < address + length {
@@ -172,7 +172,7 @@ class Memory {
                     } else {
                         result += "."
                     }
-                } 
+                }
             }
             index += 16
             result += "\n"
@@ -180,4 +180,3 @@ class Memory {
         return result
     }
 }
-

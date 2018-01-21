@@ -43,7 +43,7 @@ struct Address {
     static let pstack: Cell = 8192
     static let rstackSize: Cell = 4096 - 128
     static let pstackSize: Cell = 4096
-    
+
     static let dictionary: Cell = 8192
 }
 

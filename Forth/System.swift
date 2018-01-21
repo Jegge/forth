@@ -10,7 +10,7 @@ import Foundation
 
 private var standardError = FileHandle.standardError
 
-extension FileHandle : TextOutputStream {
+extension FileHandle: TextOutputStream {
     public func write(_ string: String) {
         guard let data = string.data(using: .utf8) else { return }
         self.write(data)
@@ -33,12 +33,13 @@ class System: SystemProvided {
 
     func print(_ string: String, error: Bool) {
         if error {
-            Swift.print(string, terminator: "", to:&standardError)
+            Swift.print(string, terminator: "", to: &standardError)
         } else {
             Swift.print(string, terminator: "")
         }
     }
-    // the warning "Will never be executed" in the followling line is due to a compiler bug involving protocols with return type Never
+    // the warning "Will never be executed" in the followling line is due to a compiler bug involving
+    // protocols with return type Never
     func exit(_ value: Cell) -> Never {
         Darwin.exit(Int32(value))
     }
@@ -49,4 +50,3 @@ class System: SystemProvided {
         return Swift.readLine(strippingNewline: false)
     }
 }
-

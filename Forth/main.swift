@@ -34,4 +34,3 @@ signal(SIGINT) { _ in
 }
 
 machine.run()
-

@@ -44,6 +44,7 @@
 		D25E6917200C8EE7000059EB /* RuntimeError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeError.swift; sourceTree = "<group>"; };
 		D25E6919200CA0A4000059EB /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		D25E691B200CA621000059EB /* Stack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stack.swift; sourceTree = "<group>"; };
+		D27D4BB22014D2B500E25FE2 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text; path = .swiftlint.yml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +61,7 @@
 		D25E68FC200C887F000059EB = {
 			isa = PBXGroup;
 			children = (
+				D27D4BB22014D2B500E25FE2 /* .swiftlint.yml */,
 				D25E6907200C887F000059EB /* Forth */,
 				D25E6906200C887F000059EB /* Products */,
 			);
@@ -97,6 +99,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = D25E690C200C887F000059EB /* Build configuration list for PBXNativeTarget "Forth" */;
 			buildPhases = (
+				D27D4BB12014D22A00E25FE2 /* ShellScript */,
 				D25E6901200C887F000059EB /* Sources */,
 				D25E6902200C887F000059EB /* Frameworks */,
 				D25E6903200C887F000059EB /* CopyFiles */,
@@ -142,6 +145,22 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		D27D4BB12014D22A00E25FE2 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if which swiftlint >/dev/null; then\n    swiftlint\nelse\n    echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		D25E6901200C887F000059EB /* Sources */ = {

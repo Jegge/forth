@@ -102,7 +102,7 @@ class Dictionary {
         var result = ": \(String(ascii: self.id(of: word)))\(self.isImmediate(word: word) ? " IMMEDIATE" : "")"
         var address = self.tcfa(word: word)
 
-        if let _ = self.code(of: address) {
+        if self.code(of: address) != nil {
             return result + " ;"
         }
 
@@ -158,7 +158,7 @@ class Dictionary {
         self.memory.append(cell: self.latest)
         self.memory.append(byte: (Byte(name.count) & Flags.lenmask) | (immediate ? Flags.immediate : Flags.none))
         self.memory.append(bytes: name)
-        self.memory.append(bytes: Array<Byte>(repeating: 0, count: Int(Memory.align(address: self.memory.here) - self.memory.here)))
+        self.memory.append(bytes: [Byte](repeating: 0, count: Int(Memory.align(address: self.memory.here) - self.memory.here)))
 
         self.latest = link
         return self.memory.here
@@ -205,4 +205,3 @@ class Dictionary {
         }
     }
 }
-

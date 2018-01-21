@@ -8,6 +8,7 @@
 
 import Foundation
 
+// swiftlint:disable:next type_body_length
 class Machine {
 
     private var system: SystemProvided
@@ -16,7 +17,7 @@ class Machine {
     private var rstack: Stack
     private var dictionary: Dictionary
 
-    private var buffer: String? = nil
+    private var buffer: String?
     private var oldIp: Cell = 0  // current / previous instruction pointer
     private var nextIp: Cell = 0  // next instruction pointer
 
@@ -51,6 +52,7 @@ class Machine {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     init (system: SystemProvided, memory: Memory, rstack: Stack, pstack: Stack, dictionary: Dictionary) {
         self.system = system
         self.memory = memory
@@ -275,7 +277,7 @@ class Machine {
         }
         _ = self.dictionary.define(word: "EMIT") {
             let character = try self.pstack.pop()
-            self.system.print(String(format:"%c", character), error: false)
+            self.system.print(String(format: "%c", character), error: false)
         }
         _ = self.dictionary.define(word: "TELL") {
             let length = try self.pstack.pop()
@@ -530,7 +532,7 @@ class Machine {
         var character: Byte = 0
 
         // skip spaces, tabs and comments
-        while (true) {
+        while true {
             character = self.key()
             while character == Character.space ||
                 character == Character.tab {
