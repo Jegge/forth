@@ -11,6 +11,7 @@ import Foundation
 class Memory {
 
     private let chunk: Cell
+    private let max: Cell
     private var data: Data = Data()
 
     struct Size {
@@ -18,8 +19,9 @@ class Memory {
         static let byte = Cell(MemoryLayout<Byte>.size)
     }
 
-    init (chunk: Cell) {
+    init (chunk: Cell, max: Cell) {
         self.chunk = chunk
+        self.max = max
         self.here = Memory.Size.cell
     }
 
@@ -32,14 +34,24 @@ class Memory {
         }
     }
 
+    var unused: Cell {
+        return (self.max - self.here) / Memory.Size.cell
+    }
+
     static func align(address: Cell) -> Cell {
         return (address + (Memory.Size.cell - 1)) & ~(Memory.Size.cell - 1)
     }
 
-    private func growIfNeededToReach(address: Cell) {
-        if address >= Int32(self.data.count) - (Memory.Size.cell + 1) {
-            self.data.append(Data(count: Int(self.chunk)))
+    private func ensureSizeFor(address: Cell) -> Bool {
+        if address >= self.max {
+            return false
         }
+        if address >= self.data.count - 1 {
+            let size = (address - Cell(self.data.count))
+            let bytes = ((size / self.chunk) + 1) * self.chunk
+            self.data.append(Data(count: Int(bytes)))
+        }
+        return true
     }
 
     subscript (address: Cell) -> Cell {
@@ -47,7 +59,9 @@ class Memory {
             if address < 0 {
                 return 0
             }
-            self.growIfNeededToReach(address: address + Memory.Size.cell)
+            if !self.ensureSizeFor(address: address + Memory.Size.cell) {
+                return 0
+            }
             let a = Cell(self.data[Int(address + 0)]) << 24
             let b = Cell(self.data[Int(address + 1)]) << 16
             let c = Cell(self.data[Int(address + 2)]) << 8
@@ -58,8 +72,9 @@ class Memory {
             if address < 0 {
                 return
             }
-            self.growIfNeededToReach(address: address + Memory.Size.cell)
-
+            if !self.ensureSizeFor(address: address + Memory.Size.cell) {
+                return
+            }
             self.data[Int(address + 0)] = Byte((newValue >> 24) & 0x000000FF)
             self.data[Int(address + 1)] = Byte((newValue >> 16) & 0x000000FF)
             self.data[Int(address + 2)] = Byte((newValue >> 8) & 0x000000FF)
@@ -72,16 +87,18 @@ class Memory {
             if address < 0 {
                 return 0
             }
-            self.growIfNeededToReach(address: address + Memory.Size.byte)
-
+            if !self.ensureSizeFor(address: address + Memory.Size.byte) {
+                return 0
+            }
             return self.data[Int(address)]
         }
         set {
             if address < 0 {
                 return
             }
-            self.growIfNeededToReach(address: address + Memory.Size.byte)
-
+            if !self.ensureSizeFor(address: address + Memory.Size.byte) {
+                return
+            }
             self.data[Int(address)] = newValue
         }
     }
@@ -91,8 +108,9 @@ class Memory {
             if text.address < 0 {
                 return []
             }
-            self.growIfNeededToReach(address: text.address + (Cell(text.length) * Memory.Size.byte))
-
+            if !self.ensureSizeFor(address: text.address + (Cell(text.length) * Memory.Size.byte)) {
+                return []
+            }
             var bytes: [Byte] = []
             for index in 0..<Int(text.length) {
                 bytes.append(self.data[index + Int(text.address)])
@@ -103,8 +121,9 @@ class Memory {
             if text.address < 0 {
                 return
             }
-            self.growIfNeededToReach(address: text.address + (Cell(text.length) * Memory.Size.byte))
-
+            if !self.ensureSizeFor(address: text.address + (Cell(text.length) * Memory.Size.byte)) {
+                return
+            }
             for index in 0..<Int(text.length) {
                 self.data[index + Int(text.address)] = newValue[index]
             }

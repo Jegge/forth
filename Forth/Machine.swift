@@ -427,6 +427,9 @@ class Machine {
         _ = self.dictionary.define(word: "WORDS") {
             self.system.print(self.dictionary.words().joined(separator: " ") + "\n", error: false)
         }
+        _ = self.dictionary.define(word: "UNUSED") {
+            try self.pstack.push(self.memory.unused)
+        }
         _ = self.dictionary.define(word: "DUMP") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()

@@ -834,14 +834,11 @@ definitions, not in immediate mode.
 
 ( show banner )
 : WELCOME
-    ." Jegge's fifth Forth v" VERSION . CR
-    ." ^D to quit." CR
+    ." Jegge's fifth Forth v" VERSION .
+    ." - " UNUSED . ." cells free." CR
+    ." ^D or BYE to quit." CR
     CR
 ;
-
-
-
-
 
 WELCOME
 HIDE WELCOME
