@@ -30,7 +30,7 @@ let dictionary = Dictionary(memory: memory)
 let machine = Machine(system: system, memory: memory, rstack: rstack, pstack: pstack, dictionary: dictionary)
 
 signal(SIGINT) { _ in
-    print(" - INTERRUPTED")
+    print(" - INTERRUPTED - HIT ENTER")
     machine.interrupt()
 }
 
