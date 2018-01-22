@@ -22,4 +22,11 @@ extension Character {
         let value = String(self).unicodeScalars.filter { $0.isASCII }.first?.value
         return value != nil ? Byte(value!) : nil
     }
+
+    static let tab: Byte = 9
+    static let space: Byte = 32
+    static let newline: Byte = 10
+    static let backslash: Byte = 92
+    static let dash: Byte = 45
+    static let delete: Byte = 127
 }

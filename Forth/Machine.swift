@@ -11,6 +11,13 @@ import Foundation
 // swiftlint:disable:next type_body_length
 class Machine {
 
+    static let version: Cell = 1
+
+    struct State {
+        static let immediate: Cell = 0
+        static let compile: Cell = 1
+    }
+
     private var system: SystemProvided
     private var memory: Memory
     private var pstack: Stack
@@ -22,8 +29,6 @@ class Machine {
     private var nextIp: Cell = 0  // next instruction pointer
 
     private var quit: Cell = 0
-    private var ignore: Cell = 0
-    private var execAddress: Cell = 0
 
     var state: Cell {
         set {
@@ -72,11 +77,11 @@ class Machine {
         _ = self.dictionary.define(variable: "IP0", value: 0, address: Address.ip0, stack: self.pstack)
         _ = self.dictionary.define(variable: "IP1", value: 0, address: Address.ip1, stack: self.pstack)
 
-        _ = self.dictionary.define(constant: "VERSION", value: Constants.version, stack: self.pstack)
+        _ = self.dictionary.define(constant: "VERSION", value: Machine.version, stack: self.pstack)
         let rz = self.dictionary.define(constant: "R0", value: Address.rstack, stack: self.pstack)
-        _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Flags.immediate), stack: self.pstack)
-        _ = self.dictionary.define(constant: "F_DIRTY", value: Cell(Flags.dirty), stack: self.pstack)
-        _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Flags.hidden), stack: self.pstack)
+        _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Dictionary.Flags.immediate), stack: self.pstack)
+        _ = self.dictionary.define(constant: "F_DIRTY", value: Cell(Dictionary.Flags.dirty), stack: self.pstack)
+        _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Dictionary.Flags.hidden), stack: self.pstack)
         _ = self.dictionary.define(constant: "MARKER", value: Dictionary.marker, stack: self.pstack)
 
         let enter = self.dictionary.define(word: "ENTER") {
@@ -384,13 +389,13 @@ class Machine {
         }
 
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
-            self.memory[self.dictionary.latest + Memory.Size.cell] ^= Flags.immediate
+            self.dictionary.toggleImmediate(word: self.dictionary.latest)
         }
         let hidden = self.dictionary.define(word: "HIDDEN") {
-            self.memory[try self.pstack.pop() + Memory.Size.cell] ^= Flags.hidden
+            self.dictionary.toggleHidden(word: self.dictionary.latest)
         }
         let dirty = self.dictionary.define(word: "DIRTY") {
-            self.memory[try self.pstack.pop() + Memory.Size.cell] ^= Flags.dirty
+            self.dictionary.toggleDirty(word: self.dictionary.latest)
         }
 
         _ = self.dictionary.define(word: "HIDE", words: [ enter, word, find, hidden, exit ])
@@ -450,7 +455,7 @@ class Machine {
             latest, fetch, dirty,
             tocompile,
             exit
-            ])
+        ])
         _ = self.dictionary.define(word: ";", immediate: true, words: [
             enter,
             lit, exit, comma,
@@ -459,7 +464,7 @@ class Machine {
             latest, fetch, dirty,
             toimmediate,
             exit
-            ])
+        ])
         _ = self.dictionary.define(word: "EXECUTE") {
             // next will be on pstack, then back to the original nextIp
             self.memory[Address.xt0] = try self.pstack.pop()
@@ -468,8 +473,6 @@ class Machine {
         }
 
         let interpret = self.dictionary.define(word: "INTERPRET") {
-
-            //self.memory[self.execAddress] = self.ignore
             let name = self.word()
             if name.count == 0 {
                 return
@@ -561,7 +564,6 @@ class Machine {
     }
 
     private func number (_ bytes: [Byte], base: Cell) -> (Cell, Cell) {
-
         if bytes.count == 0 {
             return (0, 0)
         }
@@ -615,8 +617,8 @@ class Machine {
 
     func interrupt() {
         self.buffer = nil
-        self.nextIp = self.quit - Memory.Size.cell
-        self.state = State.immediate
+        self.nextIp = self.quit - Memory.Size.cell // we offset nextIp by a cell, since a next call will occur
+        self.state = State.immediate               // before nextIp will actally e executed
         if self.dictionary.isDirty(word: self.dictionary.latest) {
             self.dictionary.removeLatest()
         }

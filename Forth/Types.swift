@@ -17,13 +17,6 @@ struct Text {
     let length: Cell
 }
 
-struct Flags {
-    static let none: Byte = 0x00
-    static let immediate: Byte = 0x80
-    static let dirty: Byte = 0x40
-    static let hidden: Byte = 0x20
-}
-
 struct Address {
     static let here: Cell = 0
     static let latest: Cell = 4
@@ -45,22 +38,4 @@ struct Address {
     static let bufferSize: Cell = 256
 
     static let dictionary: Cell = 8192
-}
-
-struct State {
-    static let immediate: Cell = 0
-    static let compile: Cell = 1
-}
-
-extension Character {
-    static let tab: Byte = 9
-    static let space: Byte = 32
-    static let newline: Byte = 10
-    static let backslash: Byte = 92
-    static let dash: Byte = 45
-    static let delete: Byte = 127
-}
-
-struct Constants {
-    static let version: Cell = 1
 }

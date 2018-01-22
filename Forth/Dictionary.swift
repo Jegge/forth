@@ -10,6 +10,13 @@ import Foundation
 
 class Dictionary {
 
+    struct Flags {
+        static let none: Byte = 0x00
+        static let immediate: Byte = 0x80
+        static let dirty: Byte = 0x40
+        static let hidden: Byte = 0x20
+    }
+
     static let marker: Cell = Int32(bitPattern: UInt32.max)
 
     private let memory: Memory
@@ -36,11 +43,25 @@ class Dictionary {
     func isHidden(word: Cell) -> Bool {
         return (self.memory[word + Memory.Size.cell] & Flags.hidden) == Flags.hidden
     }
+
     func isImmediate(word: Cell) -> Bool {
         return (self.memory[word + Memory.Size.cell] & Flags.immediate) == Flags.immediate
     }
+
     func isDirty(word: Cell) -> Bool {
         return (self.memory[word + Memory.Size.cell] & Flags.dirty) == Flags.dirty
+    }
+
+    func toggleHidden(word: Cell) {
+        self.memory[word + Memory.Size.cell] ^= Flags.hidden
+    }
+
+    func toggleImmediate(word: Cell) {
+        self.memory[word + Memory.Size.cell] ^= Flags.immediate
+    }
+
+    func toggleDirty(word: Cell) {
+        self.memory[word + Memory.Size.cell] ^= Flags.dirty
     }
 
     func id(of word: Cell) -> [Byte] {
@@ -181,7 +202,6 @@ class Dictionary {
     }
 
     func define(variable name: String, value: Cell? = nil, address: Cell? = nil, stack: Stack) -> Cell {
-
         var location: Cell
         if let address = address {
             location = address
@@ -200,7 +220,6 @@ class Dictionary {
     }
 
     func define(constant name: String, value: Cell, stack: Stack) -> Cell {
-
         return self.define(word: name) {
             try stack.push(value)
         }
