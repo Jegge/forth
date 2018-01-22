@@ -34,18 +34,18 @@ class Dictionary {
     }
 
     func isHidden(word: Cell) -> Bool {
-        return ((self.memory[word + Memory.Size.cell] & ~Flags.lenmask) & Flags.hidden) == Flags.hidden
+        return (self.memory[word + Memory.Size.cell] & Flags.hidden) == Flags.hidden
     }
     func isImmediate(word: Cell) -> Bool {
-        return ((self.memory[word + Memory.Size.cell] & ~Flags.lenmask) & Flags.immediate) == Flags.immediate
+        return (self.memory[word + Memory.Size.cell] & Flags.immediate) == Flags.immediate
     }
     func isDirty(word: Cell) -> Bool {
-        return ((self.memory[word + Memory.Size.cell] & ~Flags.lenmask) & Flags.dirty) == Flags.dirty
+        return (self.memory[word + Memory.Size.cell] & Flags.dirty) == Flags.dirty
     }
 
     func id(of word: Cell) -> [Byte] {
-        let flags: Byte = self.memory[word + Memory.Size.cell]
-        return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.byte, length: Cell(flags & Flags.lenmask))]
+        let length: Byte = self.memory[word + Memory.Size.cell + Memory.Size.byte]
+        return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.byte + Memory.Size.byte, length: Cell(length))]
     }
 
     func find(_ name: [Byte]) -> Cell {
@@ -128,8 +128,8 @@ class Dictionary {
 
     /// gets the first cell to be executed for a colon definition
     func tcfa(word: Cell) -> Cell {
-        let length = Cell(self.memory[word + Memory.Size.cell] & Flags.lenmask)
-        return Memory.align(address: word + Memory.Size.cell + Memory.Size.byte + length)
+        let length: Byte = self.memory[word + Memory.Size.cell + Memory.Size.byte]
+        return Memory.align(address: word + Memory.Size.cell + Memory.Size.byte + Memory.Size.byte + Cell(length))
     }
 
     // gets the link pointer for any address pointing somewhere in a colon definition
@@ -156,7 +156,8 @@ class Dictionary {
         let link = self.memory.here
 
         self.memory.append(cell: self.latest)
-        self.memory.append(byte: (Byte(name.count) & Flags.lenmask) | (immediate ? Flags.immediate : Flags.none))
+        self.memory.append(byte: immediate ? Flags.immediate : Flags.none)
+        self.memory.append(byte: Byte(name.count))
         self.memory.append(bytes: name)
         self.memory.append(bytes: [Byte](repeating: 0, count: Int(Memory.align(address: self.memory.here) - self.memory.here)))
 

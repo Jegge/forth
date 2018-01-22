@@ -22,7 +22,6 @@ struct Flags {
     static let immediate: Byte = 0x80
     static let dirty: Byte = 0x40
     static let hidden: Byte = 0x20
-    static let lenmask: Byte = 0x1f
 }
 
 struct Address {
@@ -37,12 +36,13 @@ struct Address {
     static let xt1: Cell = 32
     static let ip0: Cell = 36
     static let ip1: Cell = 40
-    static let buffer: Cell = 44
-
+    static let buffer: Cell = 44 // 256
     static let rstack: Cell = 4096
     static let pstack: Cell = 8192
-    static let rstackSize: Cell = 4096 - 128
+
+    static let rstackSize: Cell = 4096 - 384
     static let pstackSize: Cell = 4096
+    static let bufferSize: Cell = 256
 
     static let dictionary: Cell = 8192
 }
@@ -62,6 +62,5 @@ extension Character {
 }
 
 struct Constants {
-    static let wordlen: Int = 32
     static let version: Cell = 1
 }

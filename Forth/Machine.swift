@@ -77,7 +77,6 @@ class Machine {
         _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Flags.immediate), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_DIRTY", value: Cell(Flags.dirty), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Flags.hidden), stack: self.pstack)
-        _ = self.dictionary.define(constant: "F_LENMASK", value: Cell(Flags.lenmask), stack: self.pstack)
         _ = self.dictionary.define(constant: "MARKER", value: Dictionary.marker, stack: self.pstack)
 
         let enter = self.dictionary.define(word: "ENTER") {
@@ -429,6 +428,9 @@ class Machine {
         _ = self.dictionary.define(word: "WORDS") {
             self.system.print(self.dictionary.words().joined(separator: " ") + "\n", error: false)
         }
+        _ = self.dictionary.define(word: "ID.") {
+            self.system.print(String(ascii: self.dictionary.id(of: try self.pstack.pop())) + "\n", error: false)
+        }
         _ = self.dictionary.define(word: "UNUSED") {
             try self.pstack.push(self.memory.unused)
         }
@@ -555,7 +557,7 @@ class Machine {
                 character = self.key()
         }
 
-        return Array(buffer[0..<min(Constants.wordlen, buffer.count)])
+        return Array(buffer[0..<min(Int(Address.bufferSize), buffer.count)])
     }
 
     private func number (_ bytes: [Byte], base: Cell) -> (Cell, Cell) {
