@@ -26,6 +26,10 @@ class Stack {
 
     var pointer: Cell
 
+    var depth: Cell {
+        return (self.address - self.pointer) / Memory.Size.cell
+    }
+
     init(memory: Memory, address: Cell, size: Cell, addressAddress: Cell, name: String) {
         self.memory = memory
         self.size = size

@@ -375,6 +375,9 @@ class Machine {
         _ = self.dictionary.define(word: "DSP!") {
             self.pstack.pointer = try self.pstack.pop()
         }
+        _ = self.dictionary.define(word: "DEPTH") {
+            try self.pstack.push(self.pstack.depth)
+        }
         let tcfa = self.dictionary.define(word: ">CFA") {
             let address = try self.pstack.pop()
             try self.pstack.push(self.dictionary.tcfa(word: address))
@@ -387,19 +390,20 @@ class Machine {
         _ = self.dictionary.define(word: "CELLS") {
             try self.pstack.push(try self.pstack.pop() * Memory.Size.cell)
         }
-
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
             self.dictionary.toggleImmediate(word: self.dictionary.latest)
         }
         let hidden = self.dictionary.define(word: "HIDDEN") {
-            self.dictionary.toggleHidden(word: self.dictionary.latest)
+            self.dictionary.toggleHidden(word: try self.pstack.pop())
         }
         let dirty = self.dictionary.define(word: "DIRTY") {
-            self.dictionary.toggleDirty(word: self.dictionary.latest)
+            self.dictionary.toggleDirty(word: try self.pstack.pop())
         }
-
-        _ = self.dictionary.define(word: "HIDE", words: [ enter, word, find, hidden, exit ])
-
+        _ = self.dictionary.define(word: "HIDE", words: [
+            enter,
+            word, find, hidden,
+            exit
+        ])
         let create = self.dictionary.define(word: "CREATE") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
@@ -471,7 +475,10 @@ class Machine {
             self.memory[Address.xt1] = self.nextIp + Memory.Size.cell
             self.nextIp = Address.xt0 - Memory.Size.cell
         }
-
+        _ = self.dictionary.define(word: ".") {
+            let number = try self.pstack.pop()
+            self.system.print(String(number, radix: Int(self.base)) + " ", error: false)
+        }
         let interpret = self.dictionary.define(word: "INTERPRET") {
             let name = self.word()
             if name.count == 0 {
@@ -505,7 +512,9 @@ class Machine {
             throw RuntimeError.parseError(name)
         }
 
-        self.quit = self.dictionary.define(word: "QUIT", words: [ rz, rspstore, interpret, branch, Memory.Size.cell * -2 ])
+        self.quit = self.dictionary.define(word: "QUIT", words: [
+            rz, rspstore, interpret, branch, Memory.Size.cell * -2
+        ])
         self.nextIp = quit
     }
 
