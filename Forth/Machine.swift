@@ -334,6 +334,16 @@ class Machine {
             let cell = self.memory[address] as Cell
             try self.pstack.push(cell)
         }
+        _ = self.dictionary.define(word: "PORT!") {
+            let port = try self.pstack.pop()
+            let value = try self.pstack.pop()
+            try self.system.output(port: port, value: value)
+        }
+        _ = self.dictionary.define(word: "PORT@") {
+            let port = try self.pstack.pop()
+            let cell = try self.system.input(port: port)
+            try self.pstack.push(cell)
+        }
         _ = self.dictionary.define(word: "C!") {
             let address = try self.pstack.pop()
             let value = try self.pstack.pop()

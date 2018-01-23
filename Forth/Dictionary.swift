@@ -8,6 +8,34 @@
 
 import Foundation
 
+// Each dictionary entry has the following header.
+//
+//   Pointer to previous dictionary entry
+//     ^
+//     |         Flags
+//     |         ^
+//     |         |   Length of name            Here starts the definition, tcfa points here
+//     |         |   ^                         |
+//     |         |   |                         v
+//   +---------+---+---+---+---+---+---+---+---+--- - -
+//   | LINK    | x | 4 | T | E | S | T | 0 | 0 |
+//   +---------+---+---+---+---+---+---+---+---+--- - -
+//     ^                \------v------/ \--v--/
+//     |                      Name       Padding to the next 4 byte boundary
+//     |
+//   LATEST or next dictionary entry
+//
+//
+// Native implementations only have a dictionary entry consisting of a header; also the link address is a key
+// in the code dictionary, where the block that will be executed is stored.
+//
+// Forth implementations are preceeded by a list of addresses and terminated by a marker (0xFFFFFFFF)
+//
+// +--------+---------+--- - - - ---+---------+---------+
+// | HEADER | DOCOL   |     ...     | EXIT    | MARKER  |
+// +--------+---------+--- - - - ---+---------+---------+
+//
+
 class Dictionary {
 
     struct Flags {

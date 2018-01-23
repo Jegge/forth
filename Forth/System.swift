@@ -21,6 +21,8 @@ protocol SystemProvided {
     func print(_ string: String, error: Bool)
     func exit(_ value: Cell) -> Never
     func readLine () -> String?
+    func input (port: Cell) throws -> Cell
+    func output (port: Cell, value: Cell) throws
 }
 
 class System: SystemProvided {
@@ -48,5 +50,14 @@ class System: SystemProvided {
             return self.lines.removeFirst() + "\n"
         }
         return Swift.readLine(strippingNewline: false)
+    }
+
+    func input (port: Cell) throws  -> Cell {
+        // ...
+        return 23
+    }
+
+    func output (port: Cell, value: Cell) throws {
+        // ...
     }
 }
