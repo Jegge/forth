@@ -12,7 +12,6 @@
 
 \ CR prints a carriage return
 : CR '\n' EMIT ;
-
 : ESC 27 EMIT ;
 
 
@@ -57,17 +56,13 @@
 ;
 
 \ RECURSE makes a recursive call to the current word that is being compiled.
-\
-\ Normally while a word is being compiled, it is marked HIDDEN so that references to the
-\ same word within are calls to the previous definition of the word.  However we still have
-\ access to the word which we are currently compiling through the LATEST pointer so we
-\ can use that to compile a recursive call.
 : RECURSE IMMEDIATE
     LATEST @    \ LATEST points to the word being compiled at the moment
     >CFA        \ get the codeword
     ,           \ compile it
 ;
 
+\ CONDITIONAL EXECUTION
 : IF IMMEDIATE
     ' 0BRANCH ,     \ compile 0BRANCH
     HERE @          \ save location of the offset on the stack
@@ -90,10 +85,35 @@
     SWAP !
 ;
 
+\ LOOPING
+
+\ DO body LOOP
+: DO IMMEDIATE \ ( limit index -- )
+    HERE @
+;
+
+
+: LOOP IMMEDIATE \ ( -- )
+    ' LIT , 1 ,
+    ' + ,
+    ' 2DUP ,
+    ' < ,
+    ' 0BRANCH ,
+    HERE @ -
+    ,
+;
+
+: +LOOP IMMEDIATE \ ( n -- )
+    ' + ,
+    ' 2DUP ,
+    ' < ,
+    ' 0BRANCH ,
+    HERE @ -
+    ,
+;
+
+
 \ BEGIN loop-part condition UNTIL
-\    -- compiles to: --> loop-part condition 0BRANCH OFFSET
-\    where OFFSET points back to the loop-part
-\ This is like do { loop-part } while (condition) in the C language
 : BEGIN IMMEDIATE
     HERE @          \ save location on the stack
 ;
@@ -104,24 +124,18 @@
     ,               \ compile the offset here
 ;
 
-\ BEGIN loop-part AGAIN
-\    -- compiles to: --> loop-part BRANCH OFFSET
-\    where OFFSET points back to the loop-part
-\ In other words, an infinite loop which can only be returned from with EXIT
-: AGAIN IMMEDIATE
-    ' BRANCH ,      \ compile BRANCH
-    HERE @ -        \ calculate the offset back
-    ,               \ compile the offset here
-;
-
 \ BEGIN condition WHILE loop-part REPEAT
-\    -- compiles to: --> condition 0BRANCH OFFSET2 loop-part BRANCH OFFSET
-\    where OFFSET points back to condition (the beginning) and OFFSET2 points to after the whole piece of code
-\ So this is like a while (condition) { loop-part } loop in the C language
 : WHILE IMMEDIATE
     ' 0BRANCH ,     \ compile 0BRANCH
     HERE @          \ save location of the offset2 on the stack
     0 ,             \ compile a dummy offset2
+;
+
+\ BEGIN loop-part AGAIN
+: AGAIN IMMEDIATE
+    ' BRANCH ,      \ compile BRANCH
+    HERE @ -        \ calculate the offset back
+    ,               \ compile the offset here
 ;
 
 : REPEAT IMMEDIATE
@@ -134,13 +148,6 @@
 ;
 
 \ UNLESS is the same as IF but the test is reversed.
-\
-\ Note the use of [COMPILE]: Since IF is IMMEDIATE we don't want it to be executed while UNLESS
-\ is compiling, but while UNLESS is running (which happens to be when whatever word using UNLESS is
-\ being compiled -- whew!).  So we use [COMPILE] to reverse the effect of marking IF as immediate.
-\ This trick is generally used when we want to write our own control words without having to
-\ implement them all in terms of the primitives 0BRANCH and BRANCH, but instead reusing simpler
-\ control words like (in this instance) IF.
 : UNLESS IMMEDIATE
     ' NOT ,         \ compile NOT (to reverse the test)
     [COMPILE] IF    \ continue by calling the normal IF
@@ -432,6 +439,7 @@
     SYS-EXIT
 ;
 
+\ math functions
 : ABS ( n - |n|)
   DUP
   0< IF
@@ -454,20 +462,9 @@
     THEN
     DROP
 ;
-(
 
-: DO IMMEDIATE ( limit index -- )
-    HERE @          \ save location on the stack
-    ' 2DUP
-    ' <
-    [COMPILE] WHILE
-;
 
-: LOOP IMMEDIATE ( index -- index + 1 )
-    1+
-    [COMPILE] REPEAT
-;
-)
+
 
 : SCREEN-HOME ( -- ) ESC '[' EMIT  '0' EMIT ';' EMIT '0' EMIT 72 EMIT ;  ( prints ansi control sequence to move cursor to 0,0 )
 : SCREEN-CLEAR ( -- ) ESC '[' EMIT '0' 2 + EMIT 74 EMIT ; ( prints ansi control sequence to clear the terminal \033[2J )
@@ -475,6 +472,7 @@
 
 ( show banner )
 : WELCOME
+    PAGE
     ." Jegge's fifth Forth v" VERSION .
     ." - " UNUSED . ." cells free." CR
     ." ^D or BYE to quit." CR

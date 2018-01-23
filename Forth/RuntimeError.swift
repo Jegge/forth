@@ -13,19 +13,22 @@ enum RuntimeError: Error {
     case stackOverflow(_: String)
     case parseError(_: [Byte])
     case seeUnknownWord(_: [Byte])
+    case abort
 }
 
 extension RuntimeError: CustomStringConvertible {
     var description: String {
         switch self {
         case .stackDepleted(let name):
-            return "Expected an element on the \(name) stack, but the stack was empty."
+            return "Stack error: expected an element on the \(name) stack, but the stack was empty."
         case .stackOverflow(let name):
-            return "Tried to put an element on the \(name) stack, but the stack was full."
+            return "Stack error: tried to put an element on the \(name) stack, but the stack was full."
         case .parseError(let token):
             return "Parse error: '\(String(ascii: token))' is neither a known word nor a number literal."
         case .seeUnknownWord(let name):
-            return "Can not decompile an unknown word '\(String(ascii: name))'."
+            return "Parse error: Can not decompile an unknown word '\(String(ascii: name))'."
+        case .abort:
+            return "ABORTED"
         }
     }
 }

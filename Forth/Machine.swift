@@ -30,6 +30,8 @@ class Machine {
 
     private var quit: Cell = 0
 
+    var abort: Bool = false
+
     var state: Cell {
         set {
             self.memory[Address.state] = newValue
@@ -615,6 +617,9 @@ class Machine {
     func run() {
         while true {
             do {
+                if self.abort {
+                    throw RuntimeError.abort
+                }
                 if self.trace > 0 {
                     self.system.print(self.description + "\n", error: true)
                 }
@@ -627,19 +632,17 @@ class Machine {
                     self.nextIp = word
                 }
             } catch {
-                self.system.print("ERROR: \(error)\n", error: false)
-                self.interrupt()
+                self.system.print("\(error)\n", error: false)
+                self.buffer = nil
+                self.abort = false
                 self.nextIp = self.quit
+                self.pstack.clear()
+                self.rstack.clear()
+                self.state = State.immediate               // before nextIp will actally e executed
+                if self.dictionary.isDirty(word: self.dictionary.latest) {
+                    self.dictionary.removeLatest()
+                }
             }
-        }
-    }
-
-    func interrupt() {
-        self.buffer = nil
-        self.nextIp = self.quit - Memory.Size.cell // we offset nextIp by a cell, since a next call will occur
-        self.state = State.immediate               // before nextIp will actally e executed
-        if self.dictionary.isDirty(word: self.dictionary.latest) {
-            self.dictionary.removeLatest()
         }
     }
 }
@@ -651,6 +654,6 @@ extension Machine: CustomStringConvertible {
         let ip = "\(self.nextIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
         let pst = "\(self.pstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
         let rst = "\(self.rstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
-        return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst) | S: \(self.state == State.immediate ? "I" : "C")"
+        return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst) | S: \(self.state == State.immediate ? "I" : "C") quit: \(self.quit)"
     }
 }

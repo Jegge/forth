@@ -55,6 +55,10 @@ class Stack {
         self.pointer += Memory.Size.cell
         return cell
     }
+
+    func clear() {
+        self.pointer = self.address
+    }
 }
 
 extension Stack: CustomStringConvertible {
