@@ -30,7 +30,7 @@ let machine = Machine(system: system, memory: memory, rstack: rstack, pstack: ps
 
 signal(SIGINT) { _ in
     print(" - ABORTING - HIT ENTER")
-    machine.abort = true
+    machine.abort()
 }
 
 machine.run()

@@ -29,8 +29,7 @@ class Machine {
     private var nextIp: Cell = 0  // next instruction pointer
 
     private var quit: Cell = 0
-
-    var abort: Bool = false
+    private var wantsAbort: Bool = false
 
     var state: Cell {
         set {
@@ -617,7 +616,7 @@ class Machine {
     func run() {
         while true {
             do {
-                if self.abort {
+                if self.wantsAbort {
                     throw RuntimeError.abort
                 }
                 if self.trace > 0 {
@@ -634,16 +633,20 @@ class Machine {
             } catch {
                 self.system.print("\(error)\n", error: false)
                 self.buffer = nil
-                self.abort = false
+                self.wantsAbort = false
                 self.nextIp = self.quit
                 self.pstack.clear()
                 self.rstack.clear()
-                self.state = State.immediate               // before nextIp will actally e executed
+                self.state = State.immediate
                 if self.dictionary.isDirty(word: self.dictionary.latest) {
                     self.dictionary.removeLatest()
                 }
             }
         }
+    }
+
+    func abort() {
+        self.wantsAbort = true
     }
 }
 
