@@ -13,6 +13,9 @@
 \ CR prints a carriage return
 : CR '\n' EMIT ;
 
+: ESC 27 EMIT ;
+
+
 \ SPACE prints a space
 : SPACE BL EMIT ;
 
@@ -43,6 +46,7 @@
 : '0' [ CHAR 0 ] LITERAL ;
 : '-' [ CHAR - ] LITERAL ;
 : '.' [ CHAR . ] LITERAL ;
+: '[' [ CHAR [ ] LITERAL ;
 
 \ While compiling, '[COMPILE] word' compiles 'word' if it would otherwise be IMMEDIATE.
 : [COMPILE] IMMEDIATE
@@ -64,26 +68,6 @@
     ,           \ compile it
 ;
 
-\    CONTROL STRUCTURES ----------------------------------------------------------------------
-\
-\ So far we have defined only very simple definitions.  Before we can go further, we really need to
-\ make some control structures, like IF ... THEN and loops.  Luckily we can define arbitrary control
-\ structures directly in FORTH.
-\
-\ Please note that the control structures as I have defined them here will only work inside compiled
-\ words.  If you try to type in expressions using IF, etc. in immediate mode, then they won't work.
-\ Making these work in immediate mode is left as an exercise for the reader.
-
-\ condition IF true-part THEN rest
-\    -- compiles to: --> condition 0BRANCH OFFSET true-part rest
-\    where OFFSET is the offset of 'rest'
-\ condition IF true-part ELSE false-part THEN
-\     -- compiles to: --> condition 0BRANCH OFFSET true-part BRANCH OFFSET2 false-part rest
-\    where OFFSET if the offset of false-part and OFFSET2 is the offset of rest
-
-\ IF is an IMMEDIATE word which compiles 0BRANCH followed by a dummy offset, and places
-\ the address of the 0BRANCH on the stack.  Later when we see THEN, we pop that address
-\ off the stack, calculate the offset, and back-fill the offset.
 : IF IMMEDIATE
     ' 0BRANCH ,     \ compile 0BRANCH
     HERE @          \ save location of the offset on the stack
@@ -447,6 +431,47 @@
     0
     SYS-EXIT
 ;
+
+: ABS ( n - |n|)
+  DUP
+  0< IF
+    -1 *
+  THEN
+;
+
+: MIN ( n1 n2 -- min )
+    2DUP
+    > IF
+        SWAP
+    THEN
+    DROP
+;
+
+: MAX ( n1 n2 -- max )
+    2DUP
+    < IF
+        SWAP
+    THEN
+    DROP
+;
+(
+
+: DO IMMEDIATE ( limit index -- )
+    HERE @          \ save location on the stack
+    ' 2DUP
+    ' <
+    [COMPILE] WHILE
+;
+
+: LOOP IMMEDIATE ( index -- index + 1 )
+    1+
+    [COMPILE] REPEAT
+;
+)
+
+: SCREEN-HOME ( -- ) ESC '[' EMIT  '0' EMIT ';' EMIT '0' EMIT 72 EMIT ;  ( prints ansi control sequence to move cursor to 0,0 )
+: SCREEN-CLEAR ( -- ) ESC '[' EMIT '0' 2 + EMIT 74 EMIT ; ( prints ansi control sequence to clear the terminal \033[2J )
+: PAGE ( -- ) SCREEN-CLEAR SCREEN-HOME ;
 
 ( show banner )
 : WELCOME
