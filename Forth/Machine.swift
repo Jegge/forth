@@ -178,7 +178,7 @@ class Machine {
         _ = self.dictionary.define(word: "1-") {
             try self.pstack.push(try self.pstack.pop() - 1)
         }
-        let inccell = self.dictionary.define(word: "C+") {
+        _ = self.dictionary.define(word: "C+") {
             try self.pstack.push(try self.pstack.pop() + Memory.Size.cell)
         }
         _ = self.dictionary.define(word: "C-") {
@@ -322,12 +322,11 @@ class Machine {
         _ = self.dictionary.define(word: "CHAR") {
             try self.pstack.push(Cell(self.word().first ?? 0))
         }
-        let find = self.dictionary.define(word: "FIND") {
+        _ = self.dictionary.define(word: "FIND") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
             let name = self.memory[Text(address: address, length: length)]
             let link = self.dictionary.find(name)
-            //            print(" --- FIND: \(String(ascii: name)) -> \(link)")
             try self.pstack.push(link)
         }
         let toimmediate = self.dictionary.define(word: "[", immediate: true) {
@@ -404,7 +403,7 @@ class Machine {
         _ = self.dictionary.define(word: "DEPTH") {
             try self.pstack.push(self.pstack.depth)
         }
-        let tcfa = self.dictionary.define(word: ">CFA") {
+        _ = self.dictionary.define(word: ">CFA") {
             let address = try self.pstack.pop()
             try self.pstack.push(self.dictionary.tcfa(word: address))
         }
@@ -412,7 +411,7 @@ class Machine {
             let address = try self.pstack.pop()
             try self.pstack.push(self.dictionary.cfat(at: address))
         }
-        _ = self.dictionary.define(word: ">DFA", words: [ enter, tcfa, inccell, exit ])
+//        _ = self.dictionary.define(word: ">DFA", words: [ enter, tcfa, inccell, exit ])
         _ = self.dictionary.define(word: "CELLS") {
             try self.pstack.push(try self.pstack.pop() * Memory.Size.cell)
         }
@@ -425,11 +424,11 @@ class Machine {
         let dirty = self.dictionary.define(word: "DIRTY") {
             self.dictionary.toggleDirty(word: try self.pstack.pop())
         }
-        _ = self.dictionary.define(word: "HIDE", words: [
-            enter,
-            word, find, hidden,
-            exit
-        ])
+//        _ = self.dictionary.define(word: "HIDE", words: [
+//            enter,
+//            word, find, hidden,
+//            exit
+//        ])
         let create = self.dictionary.define(word: "CREATE") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()

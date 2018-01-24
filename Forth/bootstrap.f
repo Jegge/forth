@@ -16,13 +16,17 @@
     ,           \ and compile that
 ;
 
-
 \ RECURSE makes a recursive call to the current word that is being compiled.
 : RECURSE IMMEDIATE  \ ( -- )
     LATEST @
     >CFA
     ,
 ;
+
+: >DFA >CFA C+ ;
+
+: HIDE WORD FIND HIDDEN ;
+
 
 \ 
 \ CHARACTER constants ----------------------------------------------------------------------
@@ -412,13 +416,6 @@
     0 FILL
 ;
 
-
-
-
-(
-'WORD word FIND ?HIDDEN' returns true if 'word' is flagged as hidden.
-'WORD word FIND ?IMMEDIATE' returns true if 'word' is flagged as immediate.
-)
 : ?HIDDEN
     C+        ( skip over the link pointer )
     C@        ( get the flags/length byte )
@@ -481,7 +478,7 @@
 \ MATH ----------------------------------------------------------------------
 \ 
 
-: ABS ( n - |n|)
+: ABS ( n - |n| )
   DUP
   0< IF
     -1 *
@@ -509,13 +506,13 @@
     SWAP -
 ;
 
-: /         ( a b -- a/b )
+: /         ( n1 n2 -- quotient )
     /MOD
     SWAP
     DROP
 ;
 
-: MOD       ( a b -- a%b )
+: MOD       ( n1 n2 -- remainder )
     /MOD
     DROP
 ;
