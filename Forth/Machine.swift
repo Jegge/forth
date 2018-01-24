@@ -456,7 +456,7 @@ class Machine {
             if word == 0 {
                 throw RuntimeError.seeUnknownWord(name)
             }
-            self.system.print(self.dictionary.see(word: word) + "\n", error: false)
+            self.system.print(self.dictionary.see(word: word, base: self.base) + "\n", error: false)
         }
         _ = self.dictionary.define(word: "WORDS") {
             self.system.print(self.dictionary.words().joined(separator: " ") + "\n", error: false)
@@ -467,6 +467,7 @@ class Machine {
         _ = self.dictionary.define(word: "UNUSED") {
             try self.pstack.push(self.memory.unused)
         }
+        // Dumps bytes at an address to stoud in hexdump format ( addr len -- )
         _ = self.dictionary.define(word: "DUMP") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
@@ -680,7 +681,7 @@ class Machine {
 extension Machine: CustomStringConvertible {
     var description: String {
         var address = self.nextIp
-        let name = self.dictionary.see(at: &address).padding(toLength: 20, withPad: " ", startingAt: 0)
+        let name = self.dictionary.see(at: &address, base: self.base).padding(toLength: 20, withPad: " ", startingAt: 0)
         let ip = "\(self.nextIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
         let pst = "\(self.pstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
         let rst = "\(self.rstack)".padding(toLength: 20, withPad: " ", startingAt: 0)

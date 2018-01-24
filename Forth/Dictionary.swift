@@ -109,7 +109,7 @@ class Dictionary {
         return 0
     }
 
-    func see(at address: inout Cell) -> String {
+    func see(at address: inout Cell, base: Cell) -> String {
         let word = self.memory[address] as Cell
         let name = String(ascii: self.id(of: self.cfat(at: word)))
         var result = ""
@@ -124,11 +124,11 @@ class Dictionary {
         case "LIT":
             // print only the following instruction as a number
             address += Memory.Size.cell
-            result = " \(self.memory[address] as Cell)"
+            result = " \(String(self.memory[address] as Cell, radix: Int(base)))"
         case "BRANCH", "0BRANCH":
             // print the name and the following instruction as a number
             address += Memory.Size.cell
-            result = " \(name) \(self.memory[address] as Cell)"
+            result = " \(String(self.memory[address] as Cell, radix: Int(base)))"
         case "LITSTRING":
             // get the following instructions as a length and the content of a string
             address += Memory.Size.cell
@@ -147,7 +147,7 @@ class Dictionary {
         return result
     }
 
-    func see(word: Cell) -> String {
+    func see(word: Cell, base: Cell) -> String {
         var result = ": \(String(ascii: self.id(of: word)))\(self.isImmediate(word: word) ? " IMMEDIATE" : "")"
         var address = self.tcfa(word: word)
 
@@ -159,7 +159,7 @@ class Dictionary {
             if self.memory[address] == Dictionary.marker {
                 return result + " ;"
             }
-            result += self.see(at: &address)
+            result += self.see(at: &address, base: base)
         }
     }
 

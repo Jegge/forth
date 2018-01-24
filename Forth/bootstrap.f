@@ -63,6 +63,9 @@
 
 : DECIMAL 10 BASE ! ;   \ ( -- )
 : HEX 16 BASE ! ;       \ ( -- )
+: OCTAL 8 BASE ! ;      \ ( -- )
+: BINARY 2 BASE ! ;     \ ( -- )
+
 : DEBUG 255 TRACE ! ;   \ ( -- )
 : RELEASE 0 TRACE ! ;   \ ( -- )
 
@@ -330,14 +333,16 @@
 ;
 
 : VARIABLE
-    1 CELLS ALLOT   ( allocate 1 cell of memory, push the pointer to this memory )
+    HERE @ 7 CELLS +  ( make pointer after exit)
     WORD CREATE     ( make the dictionary entry (the name follows VARIABLE) )
     DOCOL ,         ( append DOCOL (the codeword field of this word) )
     ' LIT ,         ( append the codeword LIT )
     ,               ( append the pointer to the new memory )
     ' EXIT ,        ( append the codeword EXIT )
-    MARKER ,       ( REMOVE LATER ON )
+    MARKER ,
+    1 CELLS ALLOT DROP
 ;
+
 
 ( VALUEs are like VARIABLEs but with a simpler syntax.
 
@@ -352,7 +357,7 @@
     ' LIT ,        ( append the codeword LIT )
     ,              ( append the initial value )
     ' EXIT ,       ( append the codeword EXIT )
-    MARKER ,       ( REMOVE LATER ON )
+    MARKER ,
 ;
 
 : TO IMMEDIATE    ( n -- )
