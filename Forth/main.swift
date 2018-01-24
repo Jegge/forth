@@ -12,7 +12,8 @@ import Darwin
 var lines: [String] = []
 
 do {
-    lines = try String(contentsOf: URL(fileURLWithPath: "./bootstrap.f"))
+    let url = URL(fileURLWithPath: CommandLine.arguments.first!).deletingLastPathComponent().appendingPathComponent("bootstrap.f")
+    lines = try String(contentsOf: url)
         .components(separatedBy: .newlines)
         .filter { !$0.isEmpty }
 } catch {
@@ -22,7 +23,7 @@ do {
 }
 
 let system = System(lines: lines)
-let memory = Memory(chunk: 4096, max: 4096 * 1024 * 4) // 16 mb
+let memory = Memory(chunk: 4096, max: 1024 * 1024) // 1 mb
 let rstack = Stack(memory: memory, address: Address.rstack, size: Address.rstackSize, addressAddress: Address.r0, name: "return")
 let pstack = Stack(memory: memory, address: Address.pstack, size: Address.pstackSize, addressAddress: Address.s0, name: "parameter")
 let dictionary = Dictionary(memory: memory)
