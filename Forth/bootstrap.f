@@ -96,13 +96,17 @@
 \ limit index DO <loop-part> LOOP
 : DO IMMEDIATE      \ ( limit index -- )
     HERE @
+    ' >R ,
+    ' >R ,
 ;
 
 : LOOP IMMEDIATE    \ ( -- )
-    ' LIT , 1 ,
-    ' + ,
-    ' 2DUP ,
-    ' < ,
+    ' R> ,
+    ' R> ,
+    ' LIT , 1 ,     \ ( limit index 1 )
+    ' + ,           \ ( limit index+1 )
+    ' 2DUP ,        \ ( limit index+1 limit index+1 )
+    ' <= ,           \ ( limit index+1 0/1 )
     ' 0BRANCH ,
     HERE @ -
     ,
@@ -110,13 +114,19 @@
 
 \ limit index DO <loop-part> increment +LOOP
 : +LOOP IMMEDIATE   \ ( n -- )
-    ' + ,
-    ' 2DUP ,
-    ' < ,
+    ' R> ,
+    ' R> ,          \ ( increment limit index )
+    ' ROT ,         \ ( limit index increment )
+    ' + ,           \ ( limit index+1 )
+    ' 2DUP ,        \ ( limit index+1 limit index+1 )
+    ' <= ,           \ ( limit index+1 0/1 )
     ' 0BRANCH ,
     HERE @ -
     ,
 ;
+
+: I RSP@ C+ C+ @ ;         \ ( -- n )
+: J RSP@ C+ C+ C+ C+ @ ;   \ ( -- n )
 
 \ BEGIN <loop-part> <condition> UNTIL
 : BEGIN IMMEDIATE   \ ( -- )
@@ -183,9 +193,6 @@
 : NIP ( x y -- y ) SWAP DROP ;
 : TUCK ( x y -- y x y ) SWAP OVER ;
 : PICK  ( x_u ... x_1 x_0 u -- x_u ... x_1 x_0 x_u ) 1+ 4 * DSP@ + @ ;
-: I DUP ;   ( n -- n n )
-: J 2 PICK ; ( n1 n2 n3 -- n1 n2 n3 n1 )
-
 
 ( With the looping constructs, we can now write SPACES, which writes n spaces to stdout. )
 : SPACES    ( n -- )
