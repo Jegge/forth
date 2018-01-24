@@ -215,12 +215,13 @@
 
 ( FORTH word .S prints the contents of the stack.  It doesn't alter the stack. Very useful for debugging. )
 : .S        ( -- )
-    DSP@            ( get current stack pointer )
+    S0 @            ( get current stack pointer )
+    C-
     BEGIN
-        DUP S0 @ <
+        DUP DSP@ C+ >
     WHILE
         DUP @ .    ( print the stack element )
-        C+          ( move up )
+        C-          ( move down )
     REPEAT
     DROP
     CR
@@ -327,20 +328,19 @@
     VAR ? CR        same as above, since ? is the same as @ .
     20 VAR !        sets VAR to 20 )
 
-: ALLOT        ( n -- addr )
-    HERE @ SWAP    ( here n )
-    HERE +!        ( adds n to HERE, after this the old value of HERE is still on the stack )
+: ALLOT        ( n -- )
+    HERE +!        ( adds n to HERE )
 ;
 
 : VARIABLE
-    HERE @ 7 CELLS +  ( make pointer after exit)
-    WORD CREATE     ( make the dictionary entry (the name follows VARIABLE) )
-    DOCOL ,         ( append DOCOL (the codeword field of this word) )
-    ' LIT ,         ( append the codeword LIT )
-    ,               ( append the pointer to the new memory )
-    ' EXIT ,        ( append the codeword EXIT )
+    WORD CREATE
+    DOCOL ,
+    ' LIT ,
+    HERE @ 3 CELLS +  ( make pointer after MARKER )
+    ,                 ( append the pointer to the new memory )
+    ' EXIT ,
     MARKER ,
-    1 CELLS ALLOT DROP
+    1 CELLS ALLOT
 ;
 
 
@@ -388,6 +388,32 @@
         +!          ( update it straightaway )
     THEN
 ;
+
+\
+\ ARRAYS
+\
+
+\ Fills n bytes of memory, beginning at addr, with value b
+: FILL ( addr, n, b -- )
+    -ROT    ( b, addr, n)
+    OVER    ( b, addr, n, addr )
+    +       ( b, addr, addr+n )
+    SWAP    ( b, addr+n, addr )
+    DO
+        I       ( b addr )
+        OVER    ( b addr b )
+        -ROT    ( b b addr )
+        C!
+    LOOP
+;
+
+\ Fills n bytes of memory, beginning at addr, with 0
+: ERASE ( addr, n -- )
+    0 FILL
+;
+
+
+
 
 (
 'WORD word FIND ?HIDDEN' returns true if 'word' is flagged as hidden.

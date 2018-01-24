@@ -126,6 +126,7 @@ class Machine {
             try self.pstack.push(v2)
             try self.pstack.push(v1)
         }
+        //  ( n1 n2 n3 -- n2 n3 n1 )
         _ = self.dictionary.define(word: "ROT") {
             let v3 = try self.pstack.pop()
             let v2 = try self.pstack.pop()
@@ -355,6 +356,7 @@ class Machine {
             let cell = try self.system.input(port: port)
             try self.pstack.push(cell)
         }
+        // Stores single byte at address ( n addr -- )
         _ = self.dictionary.define(word: "C!") {
             let address = try self.pstack.pop()
             let value = try self.pstack.pop()
