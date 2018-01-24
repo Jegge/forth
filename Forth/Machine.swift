@@ -626,6 +626,18 @@ class Machine {
         self.oldIp = self.nextIp
     }
 
+    private func reset () {
+        self.buffer = nil
+        self.wantsAbort = false
+        self.nextIp = self.quit
+        self.pstack.clear()
+        self.rstack.clear()
+        self.state = State.immediate
+        if self.dictionary.isDirty(word: self.dictionary.latest) {
+            self.dictionary.removeLatest()
+        }
+    }
+
     func run() {
         while true {
             do {
@@ -645,15 +657,7 @@ class Machine {
                 }
             } catch {
                 self.system.print("\(error)\n", error: false)
-                self.buffer = nil
-                self.wantsAbort = false
-                self.nextIp = self.quit
-                self.pstack.clear()
-                self.rstack.clear()
-                self.state = State.immediate
-                if self.dictionary.isDirty(word: self.dictionary.latest) {
-                    self.dictionary.removeLatest()
-                }
+                self.reset()
             }
         }
     }
