@@ -56,6 +56,10 @@ class Stack {
         return cell
     }
 
+    func peek() -> Cell {
+        return self.memory[self.pointer]
+    }
+
     func clear() {
         self.pointer = self.address
     }

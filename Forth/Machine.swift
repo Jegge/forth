@@ -198,6 +198,16 @@ class Machine {
             let v1 = try self.pstack.pop()
             try self.pstack.push(v1 * v2)
         }
+        _ = self.dictionary.define(word: "LSHIFT") { // (
+            let v2 = try self.pstack.pop()
+            let v1 = try self.pstack.pop()
+            try self.pstack.push(v1 << v2)
+        }
+        _ = self.dictionary.define(word: "RSHIFT") {
+            let v2 = try self.pstack.pop()
+            let v1 = try self.pstack.pop()
+            try self.pstack.push(v1 >> v2)
+        }
         _ = self.dictionary.define(word: "/MOD") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
@@ -370,6 +380,9 @@ class Machine {
         }
         _ = self.dictionary.define(word: "R>") {
             try self.pstack.push(try self.rstack.pop())
+        }
+        _ = self.dictionary.define(word: "R@") {
+            try self.pstack.push(self.rstack.peek())
         }
         _ = self.dictionary.define(word: "RSP@") {
             try self.pstack.push(self.rstack.pointer)

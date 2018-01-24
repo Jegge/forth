@@ -1,41 +1,36 @@
-\ bootstrap code - see http://git.annexia.org/?p=jonesforth.git;a=blob;f=jonesforth.f;h=5c1309574ae1165195a43250c19c822ab8681671;hb=HEAD
+\ 
+\ HOUSEKEEPING ----------------------------------------------------------------------
+\ 
 
-\ The primitive word /MOD (DIVMOD) leaves both the quotient and the remainder on the stack.  (On
-\ i386, the idivl instruction gives both anyway).  Now we can define the / and MOD in terms of /MOD
-\ and a few other primitives.
-: / /MOD SWAP DROP ;
-: MOD /MOD DROP ;
-
-\ Define some character constants
-: '\n' 10 ;
-: BL   32 ; \ BL (BLank) is a standard FORTH word for space.
-
-\ CR prints a carriage return
-: CR '\n' EMIT ;
-: ESC 27 EMIT ;
-
-
-\ SPACE prints a space
-: SPACE BL EMIT ;
-
-\ NEGATE leaves the negative of a number on the stack.
-: NEGATE 0 SWAP - ;
-
-\ Standard words for booleans.
-: TRUE  1 ;
-: FALSE 0 ;
-: NOT   0= ;
-
-\ LITERAL takes whatever is on the stack and compiles LIT <foo>
+\ LITERAL takes whatever <foo> is on the stack and compiles LIT <foo>
 : LITERAL IMMEDIATE
     ' LIT , \ compile LIT
     ,       \ compile the literal itself (from the stack)
 ;
 
-\ Now we can use [ and ] to insert literals which are calculated at compile time.  (Recall that
-\ [ and ] are the FORTH words which switch into and out of immediate mode.)
-\ Within definitions, use [ ... ] LITERAL anywhere that '...' is a constant expression which you
-\ would rather only compute once (at compile time, rather than calculating it each time your word runs).
+\ While compiling, '[COMPILE] word' compiles 'word' if it would otherwise be IMMEDIATE.
+: [COMPILE] IMMEDIATE
+    WORD        \ get the next word
+    FIND        \ find it in the dictionary
+    >CFA        \ get its codeword
+    ,           \ and compile that
+;
+
+
+\ RECURSE makes a recursive call to the current word that is being compiled.
+: RECURSE IMMEDIATE  \ ( -- )
+    LATEST @
+    >CFA
+    ,
+;
+
+\ 
+\ CHARACTER constants ----------------------------------------------------------------------
+\ 
+
+: '\n' 10 ;         \ ( -- 10 )   Newline
+: BL   32 ;         \ ( -- 32 )   Blank
+
 : ':' [ CHAR : ] LITERAL ;
 : ';' [ CHAR ; ] LITERAL ;
 : '(' [ CHAR ( ] LITERAL ;
@@ -47,53 +42,63 @@
 : '.' [ CHAR . ] LITERAL ;
 : '[' [ CHAR [ ] LITERAL ;
 
-\ While compiling, '[COMPILE] word' compiles 'word' if it would otherwise be IMMEDIATE.
-: [COMPILE] IMMEDIATE
-    WORD        \ get the next word
-    FIND        \ find it in the dictionary
-    >CFA        \ get its codeword
-    ,           \ and compile that
-;
+: CR '\n' EMIT ;    \ ( -- )
+: ESC 27 EMIT ;     \ ( -- )
+: SPACE BL EMIT ;   \ ( -- )
 
-\ RECURSE makes a recursive call to the current word that is being compiled.
-: RECURSE IMMEDIATE
-    LATEST @    \ LATEST points to the word being compiled at the moment
-    >CFA        \ get the codeword
-    ,           \ compile it
-;
 
-\ CONDITIONAL EXECUTION
-: IF IMMEDIATE
-    ' 0BRANCH ,     \ compile 0BRANCH
-    HERE @          \ save location of the offset on the stack
-    0 ,             \ compile a dummy offset
+\ BOOLEAN values
+: TRUE  1 ;         \ ( -- 1 )
+: FALSE 0 ;         \ ( -- 0 )
+: NOT   0= ;        \ ( n -- !n )
+
+\ 
+\ STATE manipulation ----------------------------------------------------------------------
+\ 
+
+: DECIMAL 10 BASE ! ;   \ ( -- )
+: HEX 16 BASE ! ;       \ ( -- )
+: DEBUG 255 TRACE ! ;   \ ( -- )
+: RELEASE 0 TRACE ! ;   \ ( -- )
+
+\ 
+\ CONDITIONAL EXECUTION ----------------------------------------------------------------------
+\ 
+
+\ <condition> IF <true-part> THEN
+: IF IMMEDIATE      \ ( n -- )
+    ' 0BRANCH ,
+    HERE @
+    0 ,
 ;
 
 : THEN IMMEDIATE
     DUP
-    HERE @ SWAP -   \ calculate the offset from the address saved on the stack
-    SWAP !          \ store the offset in the back-filled location
-;
-
-: ELSE IMMEDIATE
-    ' BRANCH ,      \ definite branch to just over the false-part
-    HERE @          \ save location of the offset on the stack
-    0 ,             \ compile a dummy offset
-    SWAP            \ now back-fill the original (IF) offset
-    DUP             \ same as for THEN word above
     HERE @ SWAP -
     SWAP !
 ;
 
-\ LOOPING
+\ <condition> IF <true-part> ELSE <false-part> THEN
+: ELSE IMMEDIATE
+    ' BRANCH ,
+    HERE @
+    0 ,
+    SWAP
+    DUP
+    HERE @ SWAP -
+    SWAP !
+;
 
-\ DO body LOOP
-: DO IMMEDIATE \ ( limit index -- )
+\ 
+\ LOOPING ----------------------------------------------------------------------
+\ 
+
+\ limit index DO <loop-part> LOOP
+: DO IMMEDIATE      \ ( limit index -- )
     HERE @
 ;
 
-
-: LOOP IMMEDIATE \ ( -- )
+: LOOP IMMEDIATE    \ ( -- )
     ' LIT , 1 ,
     ' + ,
     ' 2DUP ,
@@ -103,7 +108,8 @@
     ,
 ;
 
-: +LOOP IMMEDIATE \ ( n -- )
+\ limit index DO <loop-part> increment +LOOP
+: +LOOP IMMEDIATE   \ ( n -- )
     ' + ,
     ' 2DUP ,
     ' < ,
@@ -112,30 +118,29 @@
     ,
 ;
 
-
-\ BEGIN loop-part condition UNTIL
-: BEGIN IMMEDIATE
-    HERE @          \ save location on the stack
+\ BEGIN <loop-part> <condition> UNTIL
+: BEGIN IMMEDIATE   \ ( -- )
+    HERE @
 ;
 
-: UNTIL IMMEDIATE
-    ' 0BRANCH ,     \ compile 0BRANCH
-    HERE @ -        \ calculate the offset from the address saved on the stack
-    ,               \ compile the offset here
+: UNTIL IMMEDIATE   \ ( n -- )
+    ' 0BRANCH ,
+    HERE @ -
+    ,
 ;
 
-\ BEGIN condition WHILE loop-part REPEAT
-: WHILE IMMEDIATE
-    ' 0BRANCH ,     \ compile 0BRANCH
-    HERE @          \ save location of the offset2 on the stack
-    0 ,             \ compile a dummy offset2
+\ BEGIN <condition> WHILE <loop-part> REPEAT
+: WHILE IMMEDIATE   \ ( n -- )
+    ' 0BRANCH ,
+    HERE @
+    0 ,
 ;
 
 \ BEGIN loop-part AGAIN
-: AGAIN IMMEDIATE
-    ' BRANCH ,      \ compile BRANCH
-    HERE @ -        \ calculate the offset back
-    ,               \ compile the offset here
+: AGAIN IMMEDIATE   \ ( -- )
+    ' BRANCH ,
+    HERE @ -
+    ,
 ;
 
 : REPEAT IMMEDIATE
@@ -153,10 +158,9 @@
     [COMPILE] IF    \ continue by calling the normal IF
 ;
 
-\    COMMENTS ----------------------------------------------------------------------
-\
-\ FORTH allows ( ... ) as comments within function definitions.  This works by having an IMMEDIATE
-\ word called ( which just drops input characters until it hits the corresponding ).
+\ 
+\ COMMENTS ----------------------------------------------------------------------
+\ 
 : ( IMMEDIATE
     1        \ allowed nested parens by keeping track of depth
     BEGIN
@@ -178,13 +182,10 @@
 ( Some more complicated stack examples, showing the stack notation. )
 : NIP ( x y -- y ) SWAP DROP ;
 : TUCK ( x y -- y x y ) SWAP OVER ;
+: PICK  ( x_u ... x_1 x_0 u -- x_u ... x_1 x_0 x_u ) 1+ 4 * DSP@ + @ ;
+: I DUP ;   ( n -- n n )
+: J 2 PICK ; ( n1 n2 n3 -- n1 n2 n3 n1 )
 
-: PICK  ( x_u ... x_1 x_0 u -- x_u ... x_1 x_0 x_u )
-    1+          ( add one because of 'u' on the stack )
-    4 *         ( multiply by the word size )
-    DSP@ +      ( add to the stack pointer )
-    @           ( and fetch )
-;
 
 ( With the looping constructs, we can now write SPACES, which writes n spaces to stdout. )
 : SPACES    ( n -- )
@@ -196,10 +197,6 @@
     REPEAT
     DROP
 ;
-
-( Standard words for manipulating BASE. )
-: DECIMAL ( -- ) 10 BASE ! ;
-: HEX ( -- ) 16 BASE ! ;
 
 ( FORTH word .S prints the contents of the stack.  It doesn't alter the stack. Very useful for debugging. )
 : .S        ( -- )
@@ -439,7 +436,10 @@
     SYS-EXIT
 ;
 
-\ math functions
+\ 
+\ MATH ----------------------------------------------------------------------
+\ 
+
 : ABS ( n - |n|)
   DUP
   0< IF
@@ -463,19 +463,39 @@
     DROP
 ;
 
+: NEGATE    ( n -- n*-1 )
+    0
+    SWAP -
+;
 
+: /         ( a b -- a/b )
+    /MOD
+    SWAP
+    DROP
+;
 
+: MOD       ( a b -- a%b )
+    /MOD
+    DROP
+;
 
-: SCREEN-HOME ( -- ) ESC '[' EMIT  '0' EMIT ';' EMIT '0' EMIT 72 EMIT ;  ( prints ansi control sequence to move cursor to 0,0 )
-: SCREEN-CLEAR ( -- ) ESC '[' EMIT '0' 2 + EMIT 74 EMIT ; ( prints ansi control sequence to clear the terminal \033[2J )
+\ 
+\ SCREEN CONTROL ----------------------------------------------------------------------
+\ 
+
+: SCREEN-HOME ( -- ) ESC '[' EMIT  '0' EMIT ';' EMIT '0' EMIT 72 EMIT ;     \ prints ansi control sequence \033[0;0H to move cursor to 0,0
+: SCREEN-CLEAR ( -- ) ESC '[' EMIT '0' 2 + EMIT 74 EMIT ;                   \ prints ansi control sequence \033[2J to clear the terminal
 : PAGE ( -- ) SCREEN-CLEAR SCREEN-HOME ;
 
-( show banner )
-: WELCOME
+\ 
+\ WELOME  ----------------------------------------------------------------------
+\ 
+
+: WELCOME ( -- )
     PAGE
     ." Jegge's fifth Forth v" VERSION .
     ." - " UNUSED . ." cells free." CR
-    ." ^D or BYE to quit." CR
+    ." BYE or ^D to quit, ^C to interrupt execution." CR
     CR
 ;
 
