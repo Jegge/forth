@@ -52,6 +52,11 @@
 : FALSE 0 ;         \ ( -- 0 )
 : NOT   0= ;        \ ( n -- !n )
 
+\ NUMBER Formatting
+: . 0 .R SPACE ;    \ ( n -- )
+: U. 0 U.R SPACE ;  \ ( u -- )
+: ? @ . ;           \ ( addr -- )
+
 \ 
 \ STATE manipulation ----------------------------------------------------------------------
 \ 
@@ -218,8 +223,6 @@
     CR
 ;
 
-( ? fetches the integer at an address and prints it. )
-: ? ( addr -- ) @ . ;
 
 ( c a b WITHIN returns true if a <= c and c < b )
 (  or define without ifs: OVER - >R - R>  U<  )

@@ -15,6 +15,10 @@ extension String {
     var ascii: [Byte] {
         return unicodeScalars.filter { $0.isASCII }.map { Byte($0.value) }
     }
+
+    func padLeft (toLength: Int, withPad: Character) -> String {
+        return String(repeating: withPad, count: max(toLength - self.count, 0)) + self
+    }
 }
 
 extension Character {

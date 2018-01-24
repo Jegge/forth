@@ -493,16 +493,26 @@ class Machine {
             toimmediate,
             exit
         ])
+        // Executes the address currently on the pstack ( a -- )
         _ = self.dictionary.define(word: "EXECUTE") {
             // next will be on pstack, then back to the original nextIp
             self.memory[Address.xt0] = try self.pstack.pop()
             self.memory[Address.xt1] = self.nextIp + Memory.Size.cell
             self.nextIp = Address.xt0 - Memory.Size.cell
         }
-        _ = self.dictionary.define(word: ".") {
+        // Prints an unsigned number padded to a given width ( n width -- )
+        _ = self.dictionary.define(word: "U.R") {
+            let width = try self.pstack.pop()
             let number = try self.pstack.pop()
-            self.system.print(String(number, radix: Int(self.base)) + " ", error: false)
+            self.system.print(String(UInt32(bitPattern: number), radix: Int(self.base)).padLeft(toLength: Int(width), withPad: " "), error: false)
         }
+        // Prints a number padded to a given width ( n width -- )
+        _ = self.dictionary.define(word: ".R") {
+            let width = try self.pstack.pop()
+            let number = try self.pstack.pop()
+            self.system.print(String(number, radix: Int(self.base)).padLeft(toLength: Int(width), withPad: " "), error: false)
+        }
+        // Interprets the next word on stdin ( -- )
         let interpret = self.dictionary.define(word: "INTERPRET") {
             let name = self.word()
             if name.count == 0 {
