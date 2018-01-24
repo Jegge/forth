@@ -93,10 +93,12 @@ class Machine {
         let exit = self.dictionary.define(word: "EXIT") {
             self.nextIp = try self.rstack.pop()
         }
+        // the next instruction will be interpreted as a number literal and be pushed ( -- n )
         let lit = self.dictionary.define(word: "LIT") {
             self.next()
             try self.pstack.push(self.memory[self.nextIp])
         }
+        // the next two instructions will be interpreted as the address and length of a string literal and be pushed ( -- addr length )
         _ = self.dictionary.define(word: "LITSTRING") {
             self.next()
             let length = self.memory[self.nextIp] as Cell
@@ -105,9 +107,11 @@ class Machine {
             try self.pstack.push(length)
             self.nextIp = Memory.align(address: self.nextIp + length)
         }
+        // removes the top item from the stack ( n -- )
         _ = self.dictionary.define(word: "DROP") {
             _ = try self.pstack.pop()
         }
+        // exchanges the top items on the stack ( n1 n2 -- n2 n1 )
         _ = self.dictionary.define(word: "SWAP") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
@@ -410,6 +414,9 @@ class Machine {
         _ = self.dictionary.define(word: "CFA>") {
             let address = try self.pstack.pop()
             try self.pstack.push(self.dictionary.cfat(at: address))
+        }
+        _ = self.dictionary.define(word: "PAD") {
+            try self.pstack.push(self.memory.here + 128 * Memory.Size.cell)
         }
         _ = self.dictionary.define(word: "CELLS") {
             try self.pstack.push(try self.pstack.pop() * Memory.Size.cell)
