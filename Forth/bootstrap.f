@@ -23,7 +23,7 @@
     ,
 ;
 
-: >DFA >CFA C+ ;
+: >DFA >CFA CELL+ ;
 
 : HIDE WORD FIND HIDDEN ;
 
@@ -137,8 +137,8 @@
     ,
 ;
 
-: I RSP@ C+ C+ @ ;         \ ( -- n )
-: J RSP@ C+ C+ C+ C+ @ ;   \ ( -- n )
+: I RSP@ CELL+ CELL+ @ ;         \ ( -- n )
+: J RSP@ CELL+ CELL+ CELL+ CELL+ @ ;   \ ( -- n )
 
 \ BEGIN <loop-part> <condition> UNTIL
 : BEGIN IMMEDIATE   \ ( -- )
@@ -220,12 +220,12 @@
 ( FORTH word .S prints the contents of the stack.  It doesn't alter the stack. Very useful for debugging. )
 : .S        ( -- )
     S0 @            ( get current stack pointer )
-    C-
+    CELL-
     BEGIN
-        DUP DSP@ C+ >
+        DUP DSP@ CELL+ >
     WHILE
         DUP @ .    ( print the stack element )
-        C-          ( move down )
+        CELL-          ( move down )
     REPEAT
     DROP
     CR
@@ -277,7 +277,7 @@
         DROP                ( drop the double quote character at the end )
         DUP                 ( get the saved address of the length word )
         HERE @ SWAP -       ( calculate the length )
-        C-                  ( subtract 4 (because we measured from the start of the length word) )
+        CELL-                  ( subtract 4 (because we measured from the start of the length word) )
         SWAP !              ( and back-fill the length location )
         ALIGN               ( round up to next multiple of 4 bytes for the remaining code )
     ELSE                ( immediate mode )
@@ -368,7 +368,7 @@
     WORD            ( get the name of the value )
     FIND            ( look it up in the dictionary )
     >DFA            ( get a pointer to the first data field (the 'LIT') )
-    C+              ( increment to point at the value )
+    CELL+              ( increment to point at the value )
     STATE @ IF   ( compiling? )
         ' LIT ,     ( compile LIT )
         ,           ( compile the address of the value )
@@ -383,7 +383,7 @@
     WORD        ( get the name of the value )
     FIND        ( look it up in the dictionary )
     >DFA        ( get a pointer to the first data field (the 'LIT') )
-    C+          ( increment to point at the value )
+    CELL+          ( increment to point at the value )
     STATE @ IF  ( compiling? )
         ' LIT ,     ( compile LIT )
         ,           ( compile the address of the value )
@@ -417,19 +417,19 @@
 ;
 
 : ?HIDDEN
-    C+        ( skip over the link pointer )
+    CELL+        ( skip over the link pointer )
     C@        ( get the flags/length byte )
     F_HIDDEN AND    ( mask the F_HIDDEN flag and return it (as a truth value) )
 ;
 
 : ?IMMEDIATE
-    C+        ( skip over the link pointer )
+    CELL+        ( skip over the link pointer )
     C@        ( get the flags/length byte )
     F_IMMED AND    ( mask the F_IMMED flag and return it (as a truth value) )
 ;
 
 : ?DIRTY
-    C+              ( skip over the link pointer )
+    CELL+              ( skip over the link pointer )
     C@              ( get the flags/length byte )
     F_DIRTY AND     ( mask the F_DIRTY flag and return it (as a truth value) )
 ;

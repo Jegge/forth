@@ -178,10 +178,10 @@ class Machine {
         _ = self.dictionary.define(word: "1-") {
             try self.pstack.push(try self.pstack.pop() - 1)
         }
-        _ = self.dictionary.define(word: "C+") {
+        _ = self.dictionary.define(word: "CELL+") {
             try self.pstack.push(try self.pstack.pop() + Memory.Size.cell)
         }
-        _ = self.dictionary.define(word: "C-") {
+        _ = self.dictionary.define(word: "CELL-") {
             try self.pstack.push(try self.pstack.pop() - Memory.Size.cell)
         }
         _ = self.dictionary.define(word: "+") {
@@ -411,7 +411,6 @@ class Machine {
             let address = try self.pstack.pop()
             try self.pstack.push(self.dictionary.cfat(at: address))
         }
-//        _ = self.dictionary.define(word: ">DFA", words: [ enter, tcfa, inccell, exit ])
         _ = self.dictionary.define(word: "CELLS") {
             try self.pstack.push(try self.pstack.pop() * Memory.Size.cell)
         }
@@ -424,11 +423,6 @@ class Machine {
         let dirty = self.dictionary.define(word: "DIRTY") {
             self.dictionary.toggleDirty(word: try self.pstack.pop())
         }
-//        _ = self.dictionary.define(word: "HIDE", words: [
-//            enter,
-//            word, find, hidden,
-//            exit
-//        ])
         let create = self.dictionary.define(word: "CREATE") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
