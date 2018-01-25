@@ -24,11 +24,11 @@ class Machine {
     private var rstack: Stack
     private var dictionary: Dictionary
 
-    private var buffer: String?
-    private var oldIp: Cell = 0  // current / previous instruction pointer
-    private var nextIp: Cell = 0  // next instruction pointer
+    private var buffer: String?         // line buffer for
+    private var previousIp: Cell = 0    // previous instruction pointer
+    private var currentIp: Cell = 0     // current / next instruction pointer
 
-    private var quit: Cell = 0
+    private var wordQuit: Cell = 0      // dictionary address of the word QUIT
     private var wantsAbort: Bool = false
 
     var state: Cell {
@@ -87,27 +87,27 @@ class Machine {
 
         // Pushes the instruction pointer onto the return stack
         let enter = self.dictionary.define(word: "ENTER") {
-            try self.rstack.push(self.oldIp)
+            try self.rstack.push(self.previousIp)
         }
         _ = self.dictionary.define(constant: "DOCOL", value: enter, stack: self.pstack)
 
         // Pops the instruction pointer from the return stack
         let exit = self.dictionary.define(word: "EXIT") {
-            self.nextIp = try self.rstack.pop()
+            self.currentIp = try self.rstack.pop()
         }
         // the next instruction will be interpreted as a number literal and be pushed ( -- n )
         let lit = self.dictionary.define(word: "LIT") {
             self.next()
-            try self.pstack.push(self.memory[self.nextIp])
+            try self.pstack.push(self.memory[self.currentIp])
         }
         // the next two instructions will be interpreted as the address and length of a string literal and be pushed ( -- addr length )
         _ = self.dictionary.define(word: "LITSTRING") {
             self.next()
-            let length = self.memory[self.nextIp] as Cell
-            let address = self.nextIp + Memory.Size.cell
+            let length = self.memory[self.currentIp] as Cell
+            let address = self.currentIp + Memory.Size.cell
             try self.pstack.push(address)
             try self.pstack.push(length)
-            self.nextIp = Memory.align(address: self.nextIp + length)
+            self.currentIp = Memory.align(address: self.currentIp + length)
         }
         // removes the top item from the stack ( n -- )
         _ = self.dictionary.define(word: "DROP") {
@@ -442,19 +442,19 @@ class Machine {
             _ = self.dictionary.create(word: name, immediate: false)
         }
         let branch = self.dictionary.define(word: "BRANCH") {
-            self.nextIp += self.memory[self.nextIp + Memory.Size.cell]
+            self.currentIp += self.memory[self.currentIp + Memory.Size.cell]
         }
         _ = self.dictionary.define(word: "0BRANCH") {
-            let offset: Cell = self.memory[self.nextIp + Memory.Size.cell]
+            let offset: Cell = self.memory[self.currentIp + Memory.Size.cell]
             if  try self.pstack.pop() == 0 {
-                self.nextIp += offset
+                self.currentIp += offset
             } else {
-                self.nextIp += Memory.Size.cell
+                self.currentIp += Memory.Size.cell
             }
         }
         _ = self.dictionary.define(word: "'") {
-            self.nextIp += Memory.Size.cell
-            let word: Cell = self.memory[self.nextIp]
+            self.currentIp += Memory.Size.cell
+            let word: Cell = self.memory[self.currentIp]
             try self.pstack.push(word)
         }
         _ = self.dictionary.define(word: "SEE") {
@@ -505,8 +505,8 @@ class Machine {
         _ = self.dictionary.define(word: "EXECUTE") {
             // next will be on pstack, then back to the original nextIp
             self.memory[Address.xt0] = try self.pstack.pop()
-            self.memory[Address.xt1] = self.nextIp + Memory.Size.cell
-            self.nextIp = Address.xt0 - Memory.Size.cell
+            self.memory[Address.xt1] = self.currentIp + Memory.Size.cell
+            self.currentIp = Address.xt0 - Memory.Size.cell
         }
         // Prints an unsigned number padded to a given width ( n width -- )
         _ = self.dictionary.define(word: "U.R") {
@@ -532,8 +532,8 @@ class Machine {
                 let cfa = self.dictionary.tcfa(word: word)
                 if self.state == State.immediate || self.dictionary.isImmediate(word: word) {
                     self.memory[Address.ip0] = cfa
-                    self.memory[Address.ip1] = self.nextIp
-                    self.nextIp = Address.ip0 - Memory.Size.cell
+                    self.memory[Address.ip1] = self.currentIp
+                    self.currentIp = Address.ip0 - Memory.Size.cell
                 } else {
                     self.memory.append(cell: cfa)
                 }
@@ -554,10 +554,10 @@ class Machine {
             throw RuntimeError.parseError(name)
         }
 
-        self.quit = self.dictionary.define(word: "QUIT", words: [
+        self.wordQuit = self.dictionary.define(word: "QUIT", words: [
             rz, rspstore, interpret, branch, Memory.Size.cell * -2
         ])
-        self.nextIp = quit
+        self.currentIp = wordQuit
     }
 
     private func key () -> Char {
@@ -640,14 +640,14 @@ class Machine {
     }
 
     private func next () {
-        self.nextIp += Memory.Size.cell
-        self.oldIp = self.nextIp
+        self.currentIp += Memory.Size.cell
+        self.previousIp = self.currentIp
     }
 
     private func reset () {
         self.buffer = nil
         self.wantsAbort = false
-        self.nextIp = self.quit
+        self.currentIp = self.wordQuit
         self.pstack.clear()
         self.rstack.clear()
         self.state = State.immediate
@@ -666,12 +666,12 @@ class Machine {
                     self.system.print(self.description + "\n", error: true)
                 }
 
-                let word: Cell = self.memory[self.nextIp]
+                let word: Cell = self.memory[self.currentIp]
                 if let code = self.dictionary.code(of: word) {
                     try code()
                     self.next()
                 } else {
-                    self.nextIp = word
+                    self.currentIp = word
                 }
             } catch {
                 self.system.print("\(error)\n", error: false)
@@ -687,11 +687,11 @@ class Machine {
 
 extension Machine: CustomStringConvertible {
     var description: String {
-        var address = self.nextIp
+        var address = self.currentIp
         let name = self.dictionary.see(at: &address, base: self.base).padding(toLength: 20, withPad: " ", startingAt: 0)
-        let ip = "\(self.nextIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
+        let ip = "\(self.currentIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
         let pst = "\(self.pstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
         let rst = "\(self.rstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
-        return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst) | S: \(self.state == State.immediate ? "I" : "C") quit: \(self.quit)"
+        return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst) | S: \(self.state == State.immediate ? "I" : "C") quit: \(self.wordQuit)"
     }
 }
