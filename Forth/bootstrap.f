@@ -4,34 +4,33 @@
 
 \ LITERAL takes whatever <foo> is on the stack and compiles LIT <foo>
 : LITERAL IMMEDIATE
-    ' LIT , \ compile LIT
-    ,       \ compile the literal itself (from the stack)
+    ' LIT ,
+    ,
 ;
 
 \ While compiling, '[COMPILE] word' compiles 'word' if it would otherwise be IMMEDIATE.
 : [COMPILE] IMMEDIATE
-    WORD        \ get the next word
-    FIND        \ find it in the dictionary
-    >BODY        \ get its codeword
-    ,           \ and compile that
+    WORD FIND
+    >BODY ,
 ;
 
 \ RECURSE makes a recursive call to the current word that is being compiled.
-: RECURSE IMMEDIATE  \ ( -- )
+: RECURSE IMMEDIATE
     LATEST @
-    >BODY
-    ,
+    >BODY ,
 ;
 
+\ HIDE 'word' toggles the HIDDEN flag on the word
 : HIDE WORD FIND HIDDEN ;
 
 
 \ 
 \ CHARACTER constants ----------------------------------------------------------------------
-\ 
+\
 
-: '\n' 10 ;         \ ( -- 10 )   Newline
-: BL   32 ;         \ ( -- 32 )   Blank
+: BS  8 ;         \ ( -- 8 )    Backspace
+: LF 10 ;         \ ( -- 10 )   Linefeed
+: BL 32 ;         \ ( -- 32 )   Blank
 
 : ':' [ CHAR : ] LITERAL ;
 : ';' [ CHAR ; ] LITERAL ;
@@ -44,10 +43,9 @@
 : '.' [ CHAR . ] LITERAL ;
 : '[' [ CHAR [ ] LITERAL ;
 
-: CR '\n' EMIT ;    \ ( -- )
+: CR LF EMIT ;    \ ( -- )
 : ESC 27 EMIT ;     \ ( -- )
 : SPACE BL EMIT ;   \ ( -- )
-
 
 \ BOOLEAN values
 : TRUE  1 ;         \ ( -- 1 )
@@ -68,8 +66,8 @@
 : OCTAL 8 BASE ! ;      \ ( -- )
 : BINARY 2 BASE ! ;     \ ( -- )
 
-: DEBUG 255 TRACE ! ;   \ ( -- )
-: RELEASE 0 TRACE ! ;   \ ( -- )
+: TRACEON 255 TRACE ! ; \ ( -- )
+: TRACEOFF 0 TRACE ! ;  \ ( -- )
 
 \ 
 \ CONDITIONAL EXECUTION ----------------------------------------------------------------------
@@ -311,6 +309,8 @@
     THEN
 ;
 
+: PAGE ( -- ) ESC ." [0;0H" ESC ." [2J" ;
+
 ( In FORTH, global constants  are defined like this: 10 CONSTANT TEN
   When TEN is executed, it leaves the integer 10 on the stack. )
 : CONSTANT
@@ -492,6 +492,19 @@
     0
     SWAP -
 ;
+(
+_ = self.dictionary.define(word: "/MOD") {
+let v2 = try self.pstack.pop()
+let v1 = try self.pstack.pop()
+try self.pstack.push(v1 % v2)
+try self.pstack.push(v1 / v2)
+}
+
+: /MOD ( n1 n2 -- remainder quotient )
+    2DUP ( n1 n2 )
+
+
+;
 
 : /         ( n1 n2 -- quotient )
     /MOD
@@ -503,27 +516,13 @@
     /MOD
     DROP
 ;
-
+)
 \ 
-\ SCREEN CONTROL ----------------------------------------------------------------------
-\ 
-
-: SCREEN-HOME ( -- ) ESC '[' EMIT  '0' EMIT ';' EMIT '0' EMIT 72 EMIT ;     \ prints ansi control sequence \033[0;0H to move cursor to 0,0
-: SCREEN-CLEAR ( -- ) ESC '[' EMIT '0' 2 + EMIT 74 EMIT ;                   \ prints ansi control sequence \033[2J to clear the terminal
-: PAGE ( -- ) SCREEN-CLEAR SCREEN-HOME ;
-
-\ 
-\ WELOME  ----------------------------------------------------------------------
+\ SHOW WELOME BANNER ----------------------------------------------------------------------
 \ 
 
-: WELCOME ( -- )
-    PAGE
-    ." Jegge's fifth Forth v" VERSION .
-    ." - " UNUSED . ." cells free." CR
-    ." BYE or ^D to quit, ^C to interrupt execution." CR
-    CR
-;
-
-WELCOME
-HIDE WELCOME
-
+PAGE
+." Jegge's fifth Forth v" VERSION .
+." - " UNUSED . ." cells free." CR
+." BYE or ^D to quit, ^C to interrupt execution." CR
+CR

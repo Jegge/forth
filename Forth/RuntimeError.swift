@@ -13,6 +13,7 @@ enum RuntimeError: Error {
     case stackOverflow(_: String)
     case parseError(_: [Char])
     case unknownWord(_: [Char])
+    case numberOutOfRange(_: String)
     case abort
 }
 
@@ -27,6 +28,8 @@ extension RuntimeError: CustomStringConvertible {
             return "Error: '\(String(ascii: token))' is neither a known word nor a number literal."
         case .unknownWord(let name):
             return "Error: '\(String(ascii: name))' is not a known word."
+        case .numberOutOfRange(let reason):
+            return "Error: number out of range: '\(reason)'"
         case .abort:
             return ""
         }

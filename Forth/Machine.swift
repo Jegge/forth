@@ -187,45 +187,45 @@ class Machine {
         }
         // Increments the top item on the stack by 1 ( n -- n+1 )
         _ = self.dictionary.define(word: "1+") {
-            try self.pstack.push(try self.pstack.pop() + 1)
+            try self.pstack.push(try self.add(1, to: try self.pstack.pop()))
         }
         // Decrements the top item on the stack by 1 ( n -- n-1 )
         _ = self.dictionary.define(word: "1-") {
-            try self.pstack.push(try self.pstack.pop() - 1)
+            try self.pstack.push(try self.substract(1, from: try self.pstack.pop()))
         }
         // Increments the top item on the stack by the length of one CELL ( n -- n+c )
         _ = self.dictionary.define(word: "CELL+") {
-            try self.pstack.push(try self.pstack.pop() + Memory.Size.cell)
+            try self.pstack.push(try self.add(Memory.Size.cell, to: try self.pstack.pop()))
         }
         // Decrements the top item on the stack by the length of one CELL ( n -- n-c )
         _ = self.dictionary.define(word: "CELL-") {
-            try self.pstack.push(try self.pstack.pop() - Memory.Size.cell)
+            try self.pstack.push(try self.substract(Memory.Size.cell, from: try self.pstack.pop()))
         }
         // Increments the top item on the stack by the length of one CHAR ( n -- n+b )
         _ = self.dictionary.define(word: "CHAR+") {
-            try self.pstack.push(try self.pstack.pop() + Memory.Size.char)
+            try self.pstack.push(try self.add(Memory.Size.char, to: try self.pstack.pop()))
         }
         // Decrements the top item on the stack by the length of one CHAR ( n -- n-c )
         _ = self.dictionary.define(word: "CHAR-") {
-            try self.pstack.push(try self.pstack.pop() - Memory.Size.char)
+            try self.pstack.push(try self.substract(Memory.Size.char, from: try self.pstack.pop()))
         }
         // Adds the top two elements of the stack and pushes the result ( n1 n2 -- n1+n2 )
         _ = self.dictionary.define(word: "+") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 + v2)
+            try self.pstack.push(try self.add(v1, to: v2))
         }
         // Substracts the second element of the stack from the top element and pushes the result ( n1 n2 -- n1-n2 )
         _ = self.dictionary.define(word: "-") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 - v2)
+            try self.pstack.push(try self.substract(v2, from: v1))
         }
         // Multiplies the top two elements of the stack and pushes the result ( n1 n2 -- n1*n2 )
         _ = self.dictionary.define(word: "*") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 * v2)
+            try self.pstack.push(try self.multiply(v1, by: v2))
         }
         _ = self.dictionary.define(word: "LSHIFT") { // (
             let v2 = try self.pstack.pop()
@@ -237,11 +237,15 @@ class Machine {
             let v1 = try self.pstack.pop()
             try self.pstack.push(v1 >> v2)
         }
-        _ = self.dictionary.define(word: "/MOD") {
+        _ = self.dictionary.define(word: "/") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 % v2)
-            try self.pstack.push(v1 / v2)
+            try self.pstack.push(try self.divide(v1, by: v2))
+        }
+        _ = self.dictionary.define(word: "MOD") {
+            let v2 = try self.pstack.pop()
+            let v1 = try self.pstack.pop()
+            try self.pstack.push(try self.modulo(v1, by: v2))
         }
         _ = self.dictionary.define(word: "=") {
             let v2 = try self.pstack.pop()
@@ -343,7 +347,7 @@ class Machine {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
             let text = self.memory[Text(address: address, length: length)]
-            let (value, unconverted) = self.number(text, base: self.base)
+            let (value, unconverted) = try self.number(text, base: self.base)
             try self.pstack.push(value)
             try self.pstack.push(unconverted)
         }
@@ -569,7 +573,7 @@ class Machine {
                 return
             }
 
-            let (result, unconverted) = self.number(name, base: self.base)
+            let (result, unconverted) = try self.number(name, base: self.base)
             if unconverted == 0 { // it's a number
                 if self.state == State.immediate {
                     try self.pstack.push(result)
@@ -587,6 +591,46 @@ class Machine {
             rz, rspstore, interpret, branch, Memory.Size.cell * -2
         ])
         self.currentIp = wordQuit
+    }
+
+    private func add (_ lhs: Cell, to rhs: Cell) throws -> Cell {
+        let (result, didOverflow) = lhs.addingReportingOverflow(rhs)
+        if didOverflow {
+            throw RuntimeError.numberOutOfRange("\(lhs) \(rhs) +")
+        }
+        return result
+    }
+
+    private func substract (_ rhs: Cell, from lhs: Cell) throws -> Cell {
+        let (result, didOverflow) = lhs.subtractingReportingOverflow(rhs)
+        if didOverflow {
+            throw RuntimeError.numberOutOfRange("\(lhs) \(rhs) -")
+        }
+        return result
+    }
+
+    private func multiply (_ lhs: Cell, by rhs: Cell) throws -> Cell {
+        let (result, didOverflow) = lhs.multipliedReportingOverflow(by: rhs)
+        if didOverflow {
+            throw RuntimeError.numberOutOfRange("\(lhs) \(rhs) *")
+        }
+        return result
+    }
+
+    private func divide (_ rhs: Cell, by lhs: Cell) throws -> Cell {
+        let (result, didOverflow) = rhs.dividedReportingOverflow(by: lhs)
+        if didOverflow {
+            throw RuntimeError.numberOutOfRange("\(rhs) \(lhs) /")
+        }
+        return result
+    }
+
+    private func modulo (_ rhs: Cell, by lhs: Cell) throws -> Cell {
+        let (result, didOverflow) = rhs.remainderReportingOverflow(dividingBy: lhs)
+        if didOverflow {
+            throw RuntimeError.numberOutOfRange("\(rhs) \(lhs) MOD")
+        }
+        return result
     }
 
     private func key () -> Char {
@@ -643,7 +687,7 @@ class Machine {
         return Array(buffer[0..<min(Int(Address.bufferSize), buffer.count)])
     }
 
-    private func number (_ bytes: [Char], base: Cell) -> (Cell, Cell) {
+    private func number (_ bytes: [Char], base: Cell) throws -> (Cell, Cell) {
         if bytes.count == 0 {
             return (0, 0)
         }
@@ -659,6 +703,9 @@ class Machine {
         for index in stride(from: rest.count - 1, through: 0, by: -1) {
             let string = String(ascii: Array(rest.dropLast(index)))
             if let value = Int(string, radix: Int(base)) {
+                if value < Cell.min || value > Cell.max {
+                    throw RuntimeError.numberOutOfRange(String(ascii: bytes))
+                }
                 lastValue = Cell(value)
             } else {
                 return (lastValue * sign, Cell(index + 1))

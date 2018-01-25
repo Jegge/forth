@@ -17,6 +17,7 @@
 		D25E6918200C8EE7000059EB /* RuntimeError.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E6917200C8EE7000059EB /* RuntimeError.swift */; };
 		D25E691A200CA0A4000059EB /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E6919200CA0A4000059EB /* Memory.swift */; };
 		D25E691C200CA621000059EB /* Stack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E691B200CA621000059EB /* Stack.swift */; };
+		D26B2AEF2019FE2900A30998 /* fibonacci.f in CopyFiles */ = {isa = PBXBuildFile; fileRef = D26B2AED2019F84300A30998 /* fibonacci.f */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -27,6 +28,7 @@
 			dstSubfolderSpec = 16;
 			files = (
 				D21E55AD201021A900C91CCE /* bootstrap.f in CopyFiles */,
+				D26B2AEF2019FE2900A30998 /* fibonacci.f in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -44,6 +46,7 @@
 		D25E6917200C8EE7000059EB /* RuntimeError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeError.swift; sourceTree = "<group>"; };
 		D25E6919200CA0A4000059EB /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		D25E691B200CA621000059EB /* Stack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stack.swift; sourceTree = "<group>"; };
+		D26B2AED2019F84300A30998 /* fibonacci.f */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.fortran; path = fibonacci.f; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		D27D4BB22014D2B500E25FE2 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text; path = .swiftlint.yml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -62,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				D27D4BB22014D2B500E25FE2 /* .swiftlint.yml */,
+				D26B2AEC2019F82A00A30998 /* Examples */,
 				D25E6907200C887F000059EB /* Forth */,
 				D25E6906200C887F000059EB /* Products */,
 			);
@@ -90,6 +94,14 @@
 				D25E6908200C887F000059EB /* main.swift */,
 			);
 			path = Forth;
+			sourceTree = "<group>";
+		};
+		D26B2AEC2019F82A00A30998 /* Examples */ = {
+			isa = PBXGroup;
+			children = (
+				D26B2AED2019F84300A30998 /* fibonacci.f */,
+			);
+			path = Examples;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
