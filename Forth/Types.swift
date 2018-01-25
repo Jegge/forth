@@ -28,7 +28,7 @@ struct Text {
 //          |                           |
 //          | Return stack bottom       |
 // 0x1000   +---------------------------+
-//          | Return stack top          |
+//          | Parameter stack top       |
 //          |                           |
 //          | Parameter stack bottom    |
 // 0x2000   +---------------------------+

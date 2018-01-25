@@ -114,10 +114,11 @@
     ' LIT , 1 ,     \ ( limit index 1 )
     ' + ,           \ ( limit index+1 )
     ' 2DUP ,        \ ( limit index+1 limit index+1 )
-    ' <= ,           \ ( limit index+1 0/1 )
+    ' <= ,          \ ( limit index+1 0/1 )
     ' 0BRANCH ,
     HERE @ -
     ,
+    ' 2DROP ,
 ;
 
 \ limit index DO <loop-part> increment +LOOP
@@ -131,6 +132,7 @@
     ' 0BRANCH ,
     HERE @ -
     ,
+    ' 2DROP ,
 ;
 
 : I RSP@ CELL+ CELL+ @ ;         \ ( -- n )
