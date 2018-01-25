@@ -17,6 +17,27 @@ struct Text {
     let length: Cell
 }
 
+// Memory layout:
+//
+// 0x0000   +---------------------------+
+//          | System variables          |
+// 0x002C   +---------------------------+
+//          | Line buffer               |
+// 0x012C   +---------------------------+
+//          | Return stack top          |
+//          |                           |
+//          | Return stack bottom       |
+// 0x1000   +---------------------------+
+//          | Return stack top          |
+//          |                           |
+//          | Parameter stack bottom    |
+// 0x2000   +---------------------------+
+//          |                           |
+//          | Dictionary                |
+//          |                           |
+//          .                           .
+//          .                           .
+
 struct Address {
     static let here: Cell = 0
     static let latest: Cell = 4
