@@ -125,8 +125,8 @@
     ' R> ,
     ' R> ,          \ ( increment limit index )
     ' ROT ,         \ ( limit index increment )
-    ' + ,           \ ( limit index+1 )
-    ' 2DUP ,        \ ( limit index+1 limit index+1 )
+    ' + ,           \ ( limit index+increment )
+    ' 2DUP ,        \ ( limit index+increment limit index+increment )
     ' <= ,           \ ( limit index+1 0/1 )
     ' 0BRANCH ,
     HERE @ -

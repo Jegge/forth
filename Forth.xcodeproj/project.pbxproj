@@ -18,6 +18,7 @@
 		D25E691A200CA0A4000059EB /* Memory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E6919200CA0A4000059EB /* Memory.swift */; };
 		D25E691C200CA621000059EB /* Stack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E691B200CA621000059EB /* Stack.swift */; };
 		D26B2AEF2019FE2900A30998 /* fibonacci.f in CopyFiles */ = {isa = PBXBuildFile; fileRef = D26B2AED2019F84300A30998 /* fibonacci.f */; };
+		D26B2AF2201A0E0D00A30998 /* factor.f in CopyFiles */ = {isa = PBXBuildFile; fileRef = D26B2AF0201A0DF600A30998 /* factor.f */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -27,6 +28,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
+				D26B2AF2201A0E0D00A30998 /* factor.f in CopyFiles */,
 				D21E55AD201021A900C91CCE /* bootstrap.f in CopyFiles */,
 				D26B2AEF2019FE2900A30998 /* fibonacci.f in CopyFiles */,
 			);
@@ -47,6 +49,7 @@
 		D25E6919200CA0A4000059EB /* Memory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memory.swift; sourceTree = "<group>"; };
 		D25E691B200CA621000059EB /* Stack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stack.swift; sourceTree = "<group>"; };
 		D26B2AED2019F84300A30998 /* fibonacci.f */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.fortran; path = fibonacci.f; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
+		D26B2AF0201A0DF600A30998 /* factor.f */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.fortran; path = factor.f; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		D27D4BB22014D2B500E25FE2 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text; path = .swiftlint.yml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -100,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				D26B2AED2019F84300A30998 /* fibonacci.f */,
+				D26B2AF0201A0DF600A30998 /* factor.f */,
 			);
 			path = Examples;
 			sourceTree = "<group>";
