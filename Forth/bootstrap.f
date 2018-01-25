@@ -12,18 +12,16 @@
 : [COMPILE] IMMEDIATE
     WORD        \ get the next word
     FIND        \ find it in the dictionary
-    >CFA        \ get its codeword
+    >BODY        \ get its codeword
     ,           \ and compile that
 ;
 
 \ RECURSE makes a recursive call to the current word that is being compiled.
 : RECURSE IMMEDIATE  \ ( -- )
     LATEST @
-    >CFA
+    >BODY
     ,
 ;
-
-: >DFA >CFA CELL+ ;
 
 : HIDE WORD FIND HIDDEN ;
 
@@ -300,7 +298,7 @@
 : ." IMMEDIATE        ( -- )
     STATE @ IF          ( compiling? )
         [COMPILE] S"        ( read the string, and compile LITSTRING, etc. )
-        ' TELL ,            ( compile the final TELL )
+        ' TYPE ,            ( compile the final TYPE )
     ELSE                ( In immediate mode, just read characters and print them until we get to the ending double quote. )
         BEGIN
             KEY
@@ -360,8 +358,8 @@
 : TO IMMEDIATE    ( n -- )
     WORD            ( get the name of the value )
     FIND            ( look it up in the dictionary )
-    >DFA            ( get a pointer to the first data field (the 'LIT') )
-    CELL+              ( increment to point at the value )
+    >BODY CELL+     ( get a pointer to the first data field (the 'LIT') )
+    CELL+           ( increment to point at the value )
     STATE @ IF   ( compiling? )
         ' LIT ,     ( compile LIT )
         ,           ( compile the address of the value )
@@ -373,10 +371,10 @@
 
 ( x +TO VAL adds x to VAL )
 : +TO IMMEDIATE
-    WORD        ( get the name of the value )
-    FIND        ( look it up in the dictionary )
-    >DFA        ( get a pointer to the first data field (the 'LIT') )
-    CELL+          ( increment to point at the value )
+    WORD            ( get the name of the value )
+    FIND            ( look it up in the dictionary )
+    >BODY CELL+     ( get a pointer to the first data field (the 'LIT') )
+    CELL+           ( increment to point at the value )
     STATE @ IF  ( compiling? )
         ' LIT ,     ( compile LIT )
         ,           ( compile the address of the value )

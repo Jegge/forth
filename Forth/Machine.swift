@@ -323,7 +323,7 @@ class Machine {
             let character = try self.pstack.pop()
             self.system.print(String(format: "%c", character), error: false)
         }
-        _ = self.dictionary.define(word: "TELL") {
+        _ = self.dictionary.define(word: "TYPE") {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
             let text = self.memory[Text(address: address, length: length)]
@@ -431,13 +431,9 @@ class Machine {
         _ = self.dictionary.define(word: "DEPTH") {
             try self.pstack.push(self.pstack.depth)
         }
-        _ = self.dictionary.define(word: ">CFA") {
-            let address = try self.pstack.pop()
-            try self.pstack.push(self.dictionary.tcfa(word: address))
-        }
-        _ = self.dictionary.define(word: "CFA>") {
-            let address = try self.pstack.pop()
-            try self.pstack.push(self.dictionary.cfat(at: address))
+        _ = self.dictionary.define(word: ">BODY") {
+            let word = try self.pstack.pop()
+            try self.pstack.push(self.dictionary.body(for: word))
         }
         _ = self.dictionary.define(word: "PAD") {
             try self.pstack.push(self.memory.here + Address.padOffset * Memory.Size.cell)
@@ -483,9 +479,17 @@ class Machine {
             let name = self.word()
             let word = self.dictionary.find(name)
             if word == 0 {
-                throw RuntimeError.seeUnknownWord(name)
+                throw RuntimeError.unknownWord(name)
             }
             self.system.print(self.dictionary.see(word: word, base: self.base) + "\n", error: false)
+        }
+        _ = self.dictionary.define(word: "FORGET") {
+            let name = self.word()
+            let word = self.dictionary.find(name)
+            if word == 0 {
+                throw RuntimeError.unknownWord(name)
+            }
+            self.dictionary.forget(word: word)
         }
         _ = self.dictionary.define(word: "WORDS") {
             self.system.print(self.dictionary.words().joined(separator: " ") + "\n", error: false)
@@ -551,7 +555,7 @@ class Machine {
 
             let word = self.dictionary.find(name)
             if word != 0 { // it's in the dictionary
-                let cfa = self.dictionary.tcfa(word: word)
+                let cfa = self.dictionary.body(for: word)
                 if self.state == State.immediate || self.dictionary.isImmediate(word: word) {
                     self.memory[Address.ip0] = cfa
                     self.memory[Address.ip1] = self.currentIp
@@ -674,7 +678,7 @@ class Machine {
         self.rstack.clear()
         self.state = State.immediate
         if self.dictionary.isDirty(word: self.dictionary.latest) {
-            self.dictionary.removeLatest()
+            self.dictionary.forget(word: self.dictionary.latest)
         }
     }
 

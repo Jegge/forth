@@ -92,11 +92,13 @@ class Dictionary {
         self.memory[word + Memory.Size.cell] ^= Flags.dirty
     }
 
+    /// Returns the name of a word by it's dictionary address
     func id(of word: Cell) -> [Char] {
         let length: Char = self.memory[word + Memory.Size.cell + Memory.Size.char]
         return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.char + Memory.Size.char, length: Cell(length))]
     }
 
+    /// Finds the dictionary address of word by it's name
     func find(_ name: [Char]) -> Cell {
         var word = self.latest
         while word != 0 {
@@ -109,9 +111,10 @@ class Dictionary {
         return 0
     }
 
+    /// Decompiles an instruction in a colon definition
     func see(at address: inout Cell, base: Cell) -> String {
         let word = self.memory[address] as Cell
-        let name = String(ascii: self.id(of: self.cfat(at: word)))
+        let name = String(ascii: self.id(of: self.link(for: word)))
         var result = ""
         switch name {
         case "ENTER":
@@ -120,7 +123,7 @@ class Dictionary {
         case "'":
             // print the following instruction as a name
             address += Memory.Size.cell
-            result = " \(name) \(String(ascii: self.id(of: self.cfat(at: self.memory[address]))))"
+            result = " \(name) \(String(ascii: self.id(of: self.link(for: self.memory[address]))))"
         case "LIT":
             // print only the following instruction as a number
             address += Memory.Size.cell
@@ -147,9 +150,10 @@ class Dictionary {
         return result
     }
 
+    /// Decompiles the word including it's colon definition given by it's dictionary address
     func see(word: Cell, base: Cell) -> String {
         var result = ": \(String(ascii: self.id(of: word)))\(self.isImmediate(word: word) ? " IMMEDIATE" : "")"
-        var address = self.tcfa(word: word)
+        var address = self.body(for: word)
 
         if self.code(of: address) != nil {
             return result + " ;"
@@ -163,11 +167,12 @@ class Dictionary {
         }
     }
 
+    /// Returns an alphabetically sorted list of all visible, clean words in the dictionary
     func words() -> [String] {
         var result = Set<String>()
         var word = self.latest
         while word != 0 {
-            if !self.isHidden(word: word) {
+            if !self.isHidden(word: word) && !self.isDirty(word: word) {
                 result.insert(String(ascii: self.id(of: word)))
             }
             word = self.memory[word]
@@ -175,14 +180,14 @@ class Dictionary {
         return Array(result).sorted()
     }
 
-    /// gets the first cell to be executed for a colon definition
-    func tcfa(word: Cell) -> Cell {
+    /// Gets the first cell to be executed for a colon definition
+    func body(for word: Cell) -> Cell {
         let length: Char = self.memory[word + Memory.Size.cell + Memory.Size.char]
         return Memory.align(address: word + Memory.Size.cell + Memory.Size.char + Memory.Size.char + Cell(length))
     }
 
-    // gets the link pointer for any address pointing somewhere in a colon definition
-    func cfat(at address: Cell) -> Cell {
+    /// Gets the link pointer for any address pointing somewhere into a colon definition
+    func link(for address: Cell) -> Cell {
         var word = self.latest
         while word != 0 {
             if word < address {
@@ -193,12 +198,10 @@ class Dictionary {
         return 0
     }
 
-    func removeLatest() {
-        if self.latest == 0 {
-            return
-        }
-        self.memory.here = self.latest
-        self.latest = self.memory[self.latest]
+    // Forgets the word given by it's dictionary address and all subsequent words
+    func forget(word: Cell) {
+        self.memory.here = word
+        self.latest = self.memory[word]
     }
 
     func create(word name: [Char], immediate: Bool) -> Cell {
