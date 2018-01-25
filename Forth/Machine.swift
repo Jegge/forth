@@ -354,8 +354,11 @@ class Machine {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
             let name = self.memory[Text(address: address, length: length)]
-            let link = self.dictionary.find(name)
-            try self.pstack.push(link)
+            let word = self.dictionary.find(name)
+            if word == 0 {
+                throw RuntimeError.unknownWord(name)
+            }
+            try self.pstack.push(word)
         }
         let toimmediate = self.dictionary.define(word: "[", immediate: true) {
             self.state = State.immediate
@@ -538,13 +541,13 @@ class Machine {
         _ = self.dictionary.define(word: "U.R") {
             let width = try self.pstack.pop()
             let number = try self.pstack.pop()
-            self.system.print(String(UInt32(bitPattern: number), radix: Int(self.base)).padLeft(toLength: Int(width), withPad: " "), error: false)
+            self.system.print(String(UInt32(bitPattern: number), radix: Int(self.base)).uppercased().padLeft(toLength: Int(width), withPad: " "), error: false)
         }
         // Prints a number padded to a given width ( n width -- )
         _ = self.dictionary.define(word: ".R") {
             let width = try self.pstack.pop()
             let number = try self.pstack.pop()
-            self.system.print(String(number, radix: Int(self.base)).padLeft(toLength: Int(width), withPad: " "), error: false)
+            self.system.print(String(number, radix: Int(self.base)).uppercased().padLeft(toLength: Int(width), withPad: " "), error: false)
         }
         // Interprets the next word on stdin ( -- )
         let interpret = self.dictionary.define(word: "INTERPRET") {

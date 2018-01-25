@@ -20,15 +20,15 @@ extension RuntimeError: CustomStringConvertible {
     var description: String {
         switch self {
         case .stackDepleted(let name):
-            return "Stack error: expected an element on the \(name) stack, but the stack was empty."
+            return "Error: expected an element on the \(name) stack, but the stack was empty."
         case .stackOverflow(let name):
-            return "Stack error: tried to put an element on the \(name) stack, but the stack was full."
+            return "Error: tried to put an element on the \(name) stack, but the stack was full."
         case .parseError(let token):
-            return "Parse error: '\(String(ascii: token))' is neither a known word nor a number literal."
+            return "Error: '\(String(ascii: token))' is neither a known word nor a number literal."
         case .unknownWord(let name):
-            return "Unknown word: '\(String(ascii: name))'."
+            return "Error: '\(String(ascii: name))' is not a known word."
         case .abort:
-            return "ABORTED"
+            return ""
         }
     }
 }

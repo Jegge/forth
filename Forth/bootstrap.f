@@ -356,10 +356,8 @@
 ;
 
 : TO IMMEDIATE    ( n -- )
-    WORD            ( get the name of the value )
-    FIND            ( look it up in the dictionary )
-    >BODY CELL+     ( get a pointer to the first data field (the 'LIT') )
-    CELL+           ( increment to point at the value )
+    WORD FIND
+    >BODY CELL+ CELL+   ( set pointer to address of value )
     STATE @ IF   ( compiling? )
         ' LIT ,     ( compile LIT )
         ,           ( compile the address of the value )
@@ -371,10 +369,8 @@
 
 ( x +TO VAL adds x to VAL )
 : +TO IMMEDIATE
-    WORD            ( get the name of the value )
-    FIND            ( look it up in the dictionary )
-    >BODY CELL+     ( get a pointer to the first data field (the 'LIT') )
-    CELL+           ( increment to point at the value )
+    WORD FIND
+    >BODY CELL+ CELL+   ( set pointer to address of value )
     STATE @ IF  ( compiling? )
         ' LIT ,     ( compile LIT )
         ,           ( compile the address of the value )
