@@ -750,7 +750,7 @@ class Machine {
                     self.currentIp = word
                 }
             } catch {
-                self.system.print("\(error)\n", error: false)
+                self.system.print("\n\(error)\n", error: false)
                 self.reset()
             }
         }
