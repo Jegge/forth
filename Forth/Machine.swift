@@ -95,12 +95,12 @@ class Machine {
         let exit = self.dictionary.define(word: "EXIT") {
             self.currentIp = try self.rstack.pop()
         }
-        // the next instruction will be interpreted as a number literal and be pushed ( -- n )
+        // The next instruction will be interpreted as a number literal and be pushed ( -- n )
         let lit = self.dictionary.define(word: "LIT") {
             self.next()
             try self.pstack.push(self.memory[self.currentIp])
         }
-        // the next two instructions will be interpreted as the address and length of a string literal and be pushed ( -- addr length )
+        // The next two instructions will be interpreted as the address and length of a string literal and be pushed ( -- addr length )
         _ = self.dictionary.define(word: "LITSTRING") {
             self.next()
             let length = self.memory[self.currentIp] as Cell
@@ -109,22 +109,24 @@ class Machine {
             try self.pstack.push(length)
             self.currentIp = Memory.align(address: self.currentIp + length)
         }
-        // removes the top item from the stack ( n -- )
+        // Removes the top item from the stack ( n -- )
         _ = self.dictionary.define(word: "DROP") {
             _ = try self.pstack.pop()
         }
-        // exchanges the top items on the stack ( n1 n2 -- n2 n1 )
+        // Exchanges the top items on the stack ( n1 n2 -- n2 n1 )
         _ = self.dictionary.define(word: "SWAP") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
             try self.pstack.push(v2)
             try self.pstack.push(v1)
         }
+        // Duplicates the top item on the stack ( n -- n n )
         _ = self.dictionary.define(word: "DUP") {
             let v = try self.pstack.pop()
             try self.pstack.push(v)
             try self.pstack.push(v)
         }
+        // Duplicates the second item on the stack  ( n1 n2 -- n1 n2 n1 )
         _ = self.dictionary.define(word: "OVER") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
@@ -132,7 +134,7 @@ class Machine {
             try self.pstack.push(v2)
             try self.pstack.push(v1)
         }
-        //  ( n1 n2 n3 -- n2 n3 n1 )
+        // Rotates the top three items on the stack right ( n1 n2 n3 -- n2 n3 n1 )
         _ = self.dictionary.define(word: "ROT") {
             let v3 = try self.pstack.pop()
             let v2 = try self.pstack.pop()
@@ -141,6 +143,7 @@ class Machine {
             try self.pstack.push(v3)
             try self.pstack.push(v1)
         }
+        // Rotates the top three items on the stack left ( n1 n2 n3 -- n3 n1 n2 )
         _ = self.dictionary.define(word: "-ROT") {
             let v3 = try self.pstack.pop()
             let v2 = try self.pstack.pop()
@@ -149,10 +152,12 @@ class Machine {
             try self.pstack.push(v1)
             try self.pstack.push(v2)
         }
+        // Removes the top two item from the stack ( n1 n2  -- )
         _ = self.dictionary.define(word: "2DROP") {
             _ = try self.pstack.pop()
             _ = try self.pstack.pop()
         }
+        // Duplicates the top two item on the stack ( n1 n2 -- n1 n2 n1 n2 )
         _ = self.dictionary.define(word: "2DUP") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
@@ -161,6 +166,7 @@ class Machine {
             try self.pstack.push(v1)
             try self.pstack.push(v2)
         }
+        // Exchanges the top two pairs of items on the stack ( n1 n2 n3 n4 -- n3 n4 n1 n2 )
         _ = self.dictionary.define(word: "2SWAP") {
             let v4 = try self.pstack.pop()
             let v3 = try self.pstack.pop()
@@ -171,6 +177,7 @@ class Machine {
             try self.pstack.push(v1)
             try self.pstack.push(v2)
         }
+        // Duplicates the top item on the stack if it is non-zero ( n -- | n -- n n )
         _ = self.dictionary.define(word: "?DUP") {
             let v = try self.pstack.pop()
             try self.pstack.push(v)
@@ -178,28 +185,43 @@ class Machine {
                 try self.pstack.push(v)
             }
         }
+        // Increments the top item on the stack by 1 ( n -- n+1 )
         _ = self.dictionary.define(word: "1+") {
             try self.pstack.push(try self.pstack.pop() + 1)
         }
+        // Decrements the top item on the stack by 1 ( n -- n-1 )
         _ = self.dictionary.define(word: "1-") {
             try self.pstack.push(try self.pstack.pop() - 1)
         }
+        // Increments the top item on the stack by the length of one CELL ( n -- n+c )
         _ = self.dictionary.define(word: "CELL+") {
             try self.pstack.push(try self.pstack.pop() + Memory.Size.cell)
         }
+        // Decrements the top item on the stack by the length of one CELL ( n -- n-c )
         _ = self.dictionary.define(word: "CELL-") {
             try self.pstack.push(try self.pstack.pop() - Memory.Size.cell)
         }
+        // Increments the top item on the stack by the length of one CHAR ( n -- n+b )
+        _ = self.dictionary.define(word: "CHAR+") {
+            try self.pstack.push(try self.pstack.pop() + Memory.Size.char)
+        }
+        // Decrements the top item on the stack by the length of one CHAR ( n -- n-c )
+        _ = self.dictionary.define(word: "CHAR-") {
+            try self.pstack.push(try self.pstack.pop() - Memory.Size.char)
+        }
+        // Adds the top two elements of the stack and pushes the result ( n1 n2 -- n1+n2 )
         _ = self.dictionary.define(word: "+") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
             try self.pstack.push(v1 + v2)
         }
+        // Substracts the second element of the stack from the top element and pushes the result ( n1 n2 -- n1-n2 )
         _ = self.dictionary.define(word: "-") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
             try self.pstack.push(v1 - v2)
         }
+        // Multiplies the top two elements of the stack and pushes the result ( n1 n2 -- n1*n2 )
         _ = self.dictionary.define(word: "*") {
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
