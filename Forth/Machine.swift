@@ -83,13 +83,15 @@ class Machine {
         _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Dictionary.Flags.immediate), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_DIRTY", value: Cell(Dictionary.Flags.dirty), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Dictionary.Flags.hidden), stack: self.pstack)
-        _ = self.dictionary.define(constant: "MARKER", value: Dictionary.marker, stack: self.pstack)
+        _ = self.dictionary.define(constant: "ENDOFWORD", value: Dictionary.marker, stack: self.pstack)
 
+        // Pushes the instruction pointer onto the return stack
         let enter = self.dictionary.define(word: "ENTER") {
             try self.rstack.push(self.oldIp)
         }
         _ = self.dictionary.define(constant: "DOCOL", value: enter, stack: self.pstack)
 
+        // Pops the instruction pointer from the return stack
         let exit = self.dictionary.define(word: "EXIT") {
             self.nextIp = try self.rstack.pop()
         }
@@ -363,11 +365,11 @@ class Machine {
         _ = self.dictionary.define(word: "C!") {
             let address = try self.pstack.pop()
             let value = try self.pstack.pop()
-            self.memory[address] = Byte(value)
+            self.memory[address] = Char(value)
         }
         _ = self.dictionary.define(word: "C@") {
             let address = try self.pstack.pop()
-            let cell = self.memory[address] as Byte
+            let cell = self.memory[address] as Char
             try self.pstack.push(Cell(cell))
         }
         _ = self.dictionary.define(word: "+!") {
@@ -416,10 +418,13 @@ class Machine {
             try self.pstack.push(self.dictionary.cfat(at: address))
         }
         _ = self.dictionary.define(word: "PAD") {
-            try self.pstack.push(self.memory.here + 128 * Memory.Size.cell)
+            try self.pstack.push(self.memory.here + Address.padOffset * Memory.Size.cell)
         }
         _ = self.dictionary.define(word: "CELLS") {
             try self.pstack.push(try self.pstack.pop() * Memory.Size.cell)
+        }
+        _ = self.dictionary.define(word: "CHARS") {
+            try self.pstack.push(try self.pstack.pop() * Memory.Size.char)
         }
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
             self.dictionary.toggleImmediate(word: self.dictionary.latest)
@@ -555,7 +560,7 @@ class Machine {
         self.nextIp = quit
     }
 
-    private func key () -> Byte {
+    private func key () -> Char {
         while true {
             if self.buffer == nil {
                 self.buffer = self.system.readLine()
@@ -578,9 +583,9 @@ class Machine {
         }
     }
 
-    private func word () -> [Byte] {
-        var buffer: [Byte] = []
-        var character: Byte = 0
+    private func word () -> [Char] {
+        var buffer: [Char] = []
+        var character: Char = 0
 
         // skip spaces, tabs and comments
         while true {
@@ -609,13 +614,13 @@ class Machine {
         return Array(buffer[0..<min(Int(Address.bufferSize), buffer.count)])
     }
 
-    private func number (_ bytes: [Byte], base: Cell) -> (Cell, Cell) {
+    private func number (_ bytes: [Char], base: Cell) -> (Cell, Cell) {
         if bytes.count == 0 {
             return (0, 0)
         }
 
         var sign: Cell = 1
-        var rest: [Byte] = bytes
+        var rest: [Char] = bytes
         if bytes.first == Character.dash {
             sign = -1
             rest = Array(bytes.dropFirst())

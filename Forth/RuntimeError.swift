@@ -11,8 +11,8 @@ import Foundation
 enum RuntimeError: Error {
     case stackDepleted(_: String)
     case stackOverflow(_: String)
-    case parseError(_: [Byte])
-    case seeUnknownWord(_: [Byte])
+    case parseError(_: [Char])
+    case seeUnknownWord(_: [Char])
     case abort
 }
 

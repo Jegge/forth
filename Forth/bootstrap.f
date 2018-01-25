@@ -322,15 +322,8 @@
     ' LIT ,     ( append the codeword LIT )
     ,           ( append the value on the top of the stack )
     ' EXIT ,    ( append the codeword EXIT )
-    MARKER ,       ( REMOVE LATER ON )
+    ENDOFWORD ,       ( REMOVE LATER ON )
 ;
-
-( In FORTH, global variables are defined like this: VARIABLE VAR
-  When VAR is executed, it leaves the address of VAR on the stack
-    VAR @           leaves the value of VAR on the stack
-    VAR @ . CR      prints the value of VAR
-    VAR ? CR        same as above, since ? is the same as @ .
-    20 VAR !        sets VAR to 20 )
 
 : ALLOT        ( n -- )
     HERE +!        ( adds n to HERE )
@@ -340,10 +333,10 @@
     WORD CREATE
     DOCOL ,
     ' LIT ,
-    HERE @ 3 CELLS +  ( make pointer after MARKER )
+    HERE @ 3 CELLS +  ( make pointer after ENDOFWORD )
     ,                 ( append the pointer to the new memory )
     ' EXIT ,
-    MARKER ,
+    ENDOFWORD ,
     1 CELLS ALLOT
 ;
 
@@ -361,7 +354,7 @@
     ' LIT ,        ( append the codeword LIT )
     ,              ( append the initial value )
     ' EXIT ,       ( append the codeword EXIT )
-    MARKER ,
+    ENDOFWORD ,
 ;
 
 : TO IMMEDIATE    ( n -- )

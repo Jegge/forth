@@ -9,7 +9,7 @@
 import Foundation
 
 typealias Cell = Int32
-typealias Byte = UInt8
+typealias Char = UInt8
 typealias Code = (() throws -> Void)
 
 struct Text {
@@ -36,6 +36,7 @@ struct Address {
     static let rstackSize: Cell = 4096 - 384
     static let pstackSize: Cell = 4096
     static let bufferSize: Cell = 256
+    static let padOffset: Cell = 128
 
     static let dictionary: Cell = 8192
 }

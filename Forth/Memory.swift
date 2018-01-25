@@ -16,7 +16,7 @@ class Memory {
 
     struct Size {
         static let cell = Cell(MemoryLayout<Cell>.size)
-        static let byte = Cell(MemoryLayout<Byte>.size)
+        static let char = Cell(MemoryLayout<Char>.size)
     }
 
     init (chunk: Cell, max: Cell) {
@@ -75,19 +75,19 @@ class Memory {
             if !self.ensureSizeFor(address: address + Memory.Size.cell) {
                 return
             }
-            self.data[Int(address + 0)] = Byte((newValue >> 24) & 0x000000FF)
-            self.data[Int(address + 1)] = Byte((newValue >> 16) & 0x000000FF)
-            self.data[Int(address + 2)] = Byte((newValue >> 8) & 0x000000FF)
-            self.data[Int(address + 3)] = Byte((newValue & 0x000000FF))
+            self.data[Int(address + 0)] = Char((newValue >> 24) & 0x000000FF)
+            self.data[Int(address + 1)] = Char((newValue >> 16) & 0x000000FF)
+            self.data[Int(address + 2)] = Char((newValue >> 8) & 0x000000FF)
+            self.data[Int(address + 3)] = Char((newValue & 0x000000FF))
         }
     }
 
-    subscript (address: Cell) -> Byte {
+    subscript (address: Cell) -> Char {
         get {
             if address < 0 {
                 return 0
             }
-            if !self.ensureSizeFor(address: address + Memory.Size.byte) {
+            if !self.ensureSizeFor(address: address + Memory.Size.char) {
                 return 0
             }
             return self.data[Int(address)]
@@ -96,22 +96,22 @@ class Memory {
             if address < 0 {
                 return
             }
-            if !self.ensureSizeFor(address: address + Memory.Size.byte) {
+            if !self.ensureSizeFor(address: address + Memory.Size.char) {
                 return
             }
             self.data[Int(address)] = newValue
         }
     }
 
-    subscript (text: Text) -> [Byte] {
+    subscript (text: Text) -> [Char] {
         get {
             if text.address < 0 {
                 return []
             }
-            if !self.ensureSizeFor(address: text.address + (Cell(text.length) * Memory.Size.byte)) {
+            if !self.ensureSizeFor(address: text.address + (Cell(text.length) * Memory.Size.char)) {
                 return []
             }
-            var bytes: [Byte] = []
+            var bytes: [Char] = []
             for index in 0..<Int(text.length) {
                 bytes.append(self.data[index + Int(text.address)])
             }
@@ -121,7 +121,7 @@ class Memory {
             if text.address < 0 {
                 return
             }
-            if !self.ensureSizeFor(address: text.address + (Cell(text.length) * Memory.Size.byte)) {
+            if !self.ensureSizeFor(address: text.address + (Cell(text.length) * Memory.Size.char)) {
                 return
             }
             for index in 0..<Int(text.length) {
@@ -130,9 +130,9 @@ class Memory {
         }
     }
 
-    func append(byte: Byte) {
+    func append(byte: Char) {
         self[self.here] = byte
-        self.here += Memory.Size.byte
+        self.here += Memory.Size.char
     }
 
     func append(cell: Cell) {
@@ -140,7 +140,7 @@ class Memory {
         self.here += Memory.Size.cell
     }
 
-    func append(bytes: [Byte]) {
+    func append(bytes: [Char]) {
         bytes.forEach { self.append(byte: $0) }
     }
 
@@ -155,7 +155,7 @@ class Memory {
                     result += "  "
                 }
                 if Int(index) + Int(i) < address + length {
-                    result += String(format: "% 3X", self[Cell(index) + Cell(i)] as Byte)
+                    result += String(format: "% 3X", self[Cell(index) + Cell(i)] as Char)
                 } else {
                     result += "   "
                 }
@@ -166,7 +166,7 @@ class Memory {
                     result += " "
                 }
                 if Int(index) + Int(i) < address + length {
-                    let character = self[Cell(index) + Cell(i)] as Byte
+                    let character = self[Cell(index) + Cell(i)] as Char
                     if character >= Character.space && character < Character.delete {
                         result += String(format: "%c", character)
                     } else {

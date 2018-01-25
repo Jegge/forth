@@ -9,11 +9,11 @@
 import Foundation
 
 extension String {
-    init (ascii bytes: [Byte]) {
+    init (ascii bytes: [Char]) {
         self = String(bytes: bytes, encoding: String.Encoding.ascii)!
     }
-    var ascii: [Byte] {
-        return unicodeScalars.filter { $0.isASCII }.map { Byte($0.value) }
+    var ascii: [Char] {
+        return unicodeScalars.filter { $0.isASCII }.map { Char($0.value) }
     }
 
     func padLeft (toLength: Int, withPad: Character) -> String {
@@ -22,15 +22,15 @@ extension String {
 }
 
 extension Character {
-    var ascii: Byte? {
+    var ascii: Char? {
         let value = String(self).unicodeScalars.filter { $0.isASCII }.first?.value
-        return value != nil ? Byte(value!) : nil
+        return value != nil ? Char(value!) : nil
     }
 
-    static let tab: Byte = 9
-    static let space: Byte = 32
-    static let newline: Byte = 10
-    static let backslash: Byte = 92
-    static let dash: Byte = 45
-    static let delete: Byte = 127
+    static let tab: Char = 9
+    static let space: Char = 32
+    static let newline: Char = 10
+    static let backslash: Char = 92
+    static let dash: Char = 45
+    static let delete: Char = 127
 }

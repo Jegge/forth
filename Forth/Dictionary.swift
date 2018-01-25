@@ -39,10 +39,10 @@ import Foundation
 class Dictionary {
 
     struct Flags {
-        static let none: Byte = 0x00
-        static let immediate: Byte = 0x80
-        static let dirty: Byte = 0x40
-        static let hidden: Byte = 0x20
+        static let none: Char = 0x00
+        static let immediate: Char = 0x80
+        static let dirty: Char = 0x40
+        static let hidden: Char = 0x20
     }
 
     static let marker: Cell = Int32(bitPattern: UInt32.max)
@@ -92,12 +92,12 @@ class Dictionary {
         self.memory[word + Memory.Size.cell] ^= Flags.dirty
     }
 
-    func id(of word: Cell) -> [Byte] {
-        let length: Byte = self.memory[word + Memory.Size.cell + Memory.Size.byte]
-        return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.byte + Memory.Size.byte, length: Cell(length))]
+    func id(of word: Cell) -> [Char] {
+        let length: Char = self.memory[word + Memory.Size.cell + Memory.Size.char]
+        return self.memory[Text(address: word + Memory.Size.cell + Memory.Size.char + Memory.Size.char, length: Cell(length))]
     }
 
-    func find(_ name: [Byte]) -> Cell {
+    func find(_ name: [Char]) -> Cell {
         var word = self.latest
         while word != 0 {
             let label = self.id(of: word)
@@ -177,8 +177,8 @@ class Dictionary {
 
     /// gets the first cell to be executed for a colon definition
     func tcfa(word: Cell) -> Cell {
-        let length: Byte = self.memory[word + Memory.Size.cell + Memory.Size.byte]
-        return Memory.align(address: word + Memory.Size.cell + Memory.Size.byte + Memory.Size.byte + Cell(length))
+        let length: Char = self.memory[word + Memory.Size.cell + Memory.Size.char]
+        return Memory.align(address: word + Memory.Size.cell + Memory.Size.char + Memory.Size.char + Cell(length))
     }
 
     // gets the link pointer for any address pointing somewhere in a colon definition
@@ -201,14 +201,14 @@ class Dictionary {
         self.latest = self.memory[self.latest]
     }
 
-    func create(word name: [Byte], immediate: Bool) -> Cell {
+    func create(word name: [Char], immediate: Bool) -> Cell {
         let link = self.memory.here
 
         self.memory.append(cell: self.latest)
         self.memory.append(byte: immediate ? Flags.immediate : Flags.none)
-        self.memory.append(byte: Byte(name.count))
+        self.memory.append(byte: Char(name.count))
         self.memory.append(bytes: name)
-        self.memory.append(bytes: [Byte](repeating: 0, count: Int(Memory.align(address: self.memory.here) - self.memory.here)))
+        self.memory.append(bytes: [Char](repeating: 0, count: Int(Memory.align(address: self.memory.here) - self.memory.here)))
 
         self.latest = link
         return self.memory.here
