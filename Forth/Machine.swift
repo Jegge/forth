@@ -739,7 +739,7 @@ class Machine {
                     throw RuntimeError.abort
                 }
                 if self.trace > 0 {
-                    self.system.print(self.description + "\n", error: true)
+                    self.system.print(self.description.styled(style: .dim) + "\n", error: true)
                 }
 
                 let word: Cell = self.memory[self.currentIp]
@@ -750,7 +750,7 @@ class Machine {
                     self.currentIp = word
                 }
             } catch {
-                self.system.print("\n\(error)\n", error: false)
+                self.system.print("\n\(error)\n".styled(style: .bold), error: false)
                 self.reset()
             }
         }
