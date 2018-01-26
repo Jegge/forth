@@ -19,6 +19,7 @@
 		D25E691C200CA621000059EB /* Stack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D25E691B200CA621000059EB /* Stack.swift */; };
 		D26B2AEF2019FE2900A30998 /* fibonacci.f in CopyFiles */ = {isa = PBXBuildFile; fileRef = D26B2AED2019F84300A30998 /* fibonacci.f */; };
 		D26B2AF2201A0E0D00A30998 /* factor.f in CopyFiles */ = {isa = PBXBuildFile; fileRef = D26B2AF0201A0DF600A30998 /* factor.f */; };
+		D26B2AF4201B142600A30998 /* ConsoleColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26B2AF3201B142600A30998 /* ConsoleColors.swift */; };
 		D275BDA1201A604E00AF5B91 /* peuler.f in CopyFiles */ = {isa = PBXBuildFile; fileRef = D275BD9F201A603A00AF5B91 /* peuler.f */; };
 /* End PBXBuildFile section */
 
@@ -52,6 +53,7 @@
 		D25E691B200CA621000059EB /* Stack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stack.swift; sourceTree = "<group>"; };
 		D26B2AED2019F84300A30998 /* fibonacci.f */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.fortran; path = fibonacci.f; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		D26B2AF0201A0DF600A30998 /* factor.f */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.fortran; path = factor.f; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
+		D26B2AF3201B142600A30998 /* ConsoleColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleColors.swift; sourceTree = "<group>"; };
 		D275BD9F201A603A00AF5B91 /* peuler.f */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.fortran; path = peuler.f; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		D27D4BB22014D2B500E25FE2 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text; path = .swiftlint.yml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -91,6 +93,7 @@
 				D21E55AB2010218700C91CCE /* bootstrap.f */,
 				D25E6913200C8953000059EB /* Types.swift */,
 				D21E55A72010145E00C91CCE /* Extensions.swift */,
+				D26B2AF3201B142600A30998 /* ConsoleColors.swift */,
 				D25E6917200C8EE7000059EB /* RuntimeError.swift */,
 				D25E6919200CA0A4000059EB /* Memory.swift */,
 				D25E691B200CA621000059EB /* Stack.swift */,
@@ -196,6 +199,7 @@
 				D25E6910200C88C8000059EB /* Machine.swift in Sources */,
 				D21E55AA2010213700C91CCE /* System.swift in Sources */,
 				D25E6914200C8953000059EB /* Types.swift in Sources */,
+				D26B2AF4201B142600A30998 /* ConsoleColors.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
