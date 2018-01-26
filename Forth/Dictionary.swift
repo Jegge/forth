@@ -45,7 +45,7 @@ class Dictionary {
         static let hidden: Char = 0x20
     }
 
-    static let marker: Cell = Int32(bitPattern: UInt32.max)
+    static let marker: Cell = Cell(bitPattern: UCell.max)
 
     private let memory: Memory
     private var code: [Cell: Code] = [:]

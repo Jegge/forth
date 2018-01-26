@@ -545,7 +545,7 @@ class Machine {
         _ = self.dictionary.define(word: "U.R") {
             let width = try self.pstack.pop()
             let number = try self.pstack.pop()
-            self.system.print(String(UInt32(bitPattern: number), radix: Int(self.base)).uppercased().padLeft(toLength: Int(width), withPad: " "), error: false)
+            self.system.print(String(UCell(bitPattern: number), radix: Int(self.base)).uppercased().padLeft(toLength: Int(width), withPad: " "), error: false)
         }
         // Prints a number padded to a given width ( n width -- )
         _ = self.dictionary.define(word: ".R") {

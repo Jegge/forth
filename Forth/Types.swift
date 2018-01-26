@@ -9,55 +9,11 @@
 import Foundation
 
 typealias Cell = Int32
+typealias UCell = UInt32
 typealias Char = UInt8
 typealias Code = (() throws -> Void)
 
 struct Text {
     let address: Cell
     let length: Cell
-}
-
-// Memory layout:
-//
-// 0x0000   +---------------------------+
-//          | System variables          |
-// 0x002C   +---------------------------+
-//          | Line buffer               |
-// 0x012C   +---------------------------+
-//          | Return stack top          |
-//          |                           |
-//          | Return stack bottom       |
-// 0x1000   +---------------------------+
-//          | Parameter stack top       |
-//          |                           |
-//          | Parameter stack bottom    |
-// 0x2000   +---------------------------+
-//          |                           |
-//          | Dictionary                |
-//          |                           |
-//          .                           .
-//          .                           .
-
-struct Address {
-    static let here: Cell = 0
-    static let latest: Cell = 4
-    static let state: Cell = 8
-    static let base: Cell = 12
-    static let trace: Cell = 16
-    static let r0: Cell = 20
-    static let s0: Cell = 24
-    static let xt0: Cell = 28
-    static let xt1: Cell = 32
-    static let ip0: Cell = 36
-    static let ip1: Cell = 40
-    static let buffer: Cell = 44 // 256
-    static let rstack: Cell = 4096
-    static let pstack: Cell = 8192
-
-    static let rstackSize: Cell = 4096 - 384
-    static let pstackSize: Cell = 4096
-    static let bufferSize: Cell = 256
-    static let padOffset: Cell = 128
-
-    static let dictionary: Cell = 8192
 }
