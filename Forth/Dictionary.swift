@@ -131,7 +131,7 @@ class Dictionary {
         case "BRANCH", "0BRANCH":
             // print the name and the following instruction as a number
             address += Memory.Size.cell
-            result = " \(String(self.memory[address] as Cell, radix: Int(base)))"
+            result = " \(name) \(String(self.memory[address] as Cell, radix: Int(base)))"
         case "LITSTRING":
             // get the following instructions as a length and the content of a string
             address += Memory.Size.cell
