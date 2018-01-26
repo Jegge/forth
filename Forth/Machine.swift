@@ -766,8 +766,8 @@ extension Machine: CustomStringConvertible {
         var address = self.currentIp
         let name = self.dictionary.see(at: &address, base: self.base).padding(toLength: 20, withPad: " ", startingAt: 0)
         let ip = "\(self.currentIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
-        let pst = "\(self.pstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
-        let rst = "\(self.rstack)".padding(toLength: 20, withPad: " ", startingAt: 0)
-        return "\(name) | IP: \(ip) | PST: \(pst) | RST: \(rst) | S: \(self.state == State.immediate ? "I" : "C") quit: \(self.wordQuit)"
+        let pst = self.pstack.dump(base: self.base).padding(toLength: 20, withPad: " ", startingAt: 0)
+        let rst = self.rstack.dump(base: self.base).padding(toLength: 20, withPad: " ", startingAt: 0)
+        return "IP: \(ip) | PST: \(pst) | RST: \(rst) | \(name)"
     }
 }

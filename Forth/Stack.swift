@@ -63,11 +63,8 @@ class Stack {
     func clear() {
         self.pointer = self.address
     }
-}
 
-extension Stack: CustomStringConvertible {
-    var description: String {
-
+    func dump (base: Cell) -> String {
         if self.address == self.pointer {
             return "[]"
         }
@@ -75,7 +72,7 @@ extension Stack: CustomStringConvertible {
         var result = "[ "
         for index in stride(from: Int(self.address - Memory.Size.cell), to: Int(self.pointer), by: Int(-Memory.Size.cell)) {
             let cell: Cell = self.memory[Cell(index)]
-            result += "\(cell), "
+            result +=  String(cell, radix: Int(base)) + ", "
         }
 
         let cell: Cell = self.memory[self.pointer]
