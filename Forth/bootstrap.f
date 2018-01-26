@@ -116,8 +116,7 @@
     ' 2DUP ,        \ ( limit index+1 limit index+1 )
     ' <= ,          \ ( limit index+1 0/1 )
     ' 0BRANCH ,
-    HERE @ -
-    ,
+    HERE @ - ,
     ' 2DROP ,
 ;
 
@@ -130,8 +129,20 @@
     ' 2DUP ,        \ ( limit index+increment limit index+increment )
     ' <= ,           \ ( limit index+1 0/1 )
     ' 0BRANCH ,
-    HERE @ -
-    ,
+    HERE @ - ,
+    ' 2DROP ,
+;
+
+\ limit index DO <loop-part> decrement -LOOP
+: -LOOP IMMEDIATE   \ ( n -- )
+    ' R> ,
+    ' R> ,          \ ( increment limit index )
+    ' ROT ,         \ ( limit index increment )
+    ' - ,           \ ( limit index+increment )
+    ' 2DUP ,        \ ( limit index+increment limit index+increment )
+    ' >= ,           \ ( limit index+1 0/1 )
+    ' 0BRANCH ,
+    HERE @ - ,
     ' 2DROP ,
 ;
 
@@ -200,9 +211,39 @@
 ( From now on we can use ( ... ) for comments. )
 
 ( Some more complicated stack examples, showing the stack notation. )
-: NIP ( x y -- y ) SWAP DROP ;
-: TUCK ( x y -- y x y ) SWAP OVER ;
-: PICK  ( x_u ... x_1 x_0 u -- x_u ... x_1 x_0 x_u ) 1+ 4 * DSP@ + @ ;
+: NIP ( x y -- y )
+    SWAP
+    DROP
+;
+
+: TUCK ( x y -- y x y )
+    SWAP
+    OVER
+;
+
+: PICK ( x_u ... x_1 x_0 u -- x_u ... x_1 x_0 x_u )
+    1+
+    4 *
+    DSP@ +
+    @
+;
+
+: ROLL ( xu xu-1 ... x0 u -- xu-1 ... x0 xu )
+    DUP         ( xu xu-1 ... x0 u u )
+    1+          ( xu xu-1 ... x0 u u+1 )
+    PICK        ( xu xu-1 ... x0 u xu )
+    SWAP        ( xu xu-1 ... x0 xu u )
+    1+          ( xu xu-1 ... x0 xu u )
+    0           ( xu xu-1 ... x0 xu u 0 )
+    SWAP        ( xu xu-1 ... x0 xu 0 u )
+    DO
+        I 4 * DSP@ + @     ( ... value )
+        I 2 + 4 * DSP@ +   ( ... value address )
+        !                  ( ... )
+        1
+    -LOOP
+    DROP
+;
 
 ( With the looping constructs, we can now write SPACES, which writes n spaces to stdout. )
 : SPACES    ( n -- )
@@ -494,37 +535,19 @@
     0
     SWAP -
 ;
-(
-_ = self.dictionary.define(word: "/MOD") {
-let v2 = try self.pstack.pop()
-let v1 = try self.pstack.pop()
-try self.pstack.push(v1 % v2)
-try self.pstack.push(v1 / v2)
-}
 
 : /MOD ( n1 n2 -- remainder quotient )
-    2DUP ( n1 n2 )
-
-
+    2DUP ( n1 n2 n1 n2 )
+    MOD  ( n1 n2 remainder )
+    -ROT ( remainder n1 n2 )
+    /    ( remainder quotient )
 ;
 
-: /         ( n1 n2 -- quotient )
-    /MOD
-    SWAP
-    DROP
-;
-
-: MOD       ( n1 n2 -- remainder )
-    /MOD
-    DROP
-;
-)
-\ 
+\
 \ SHOW WELOME BANNER ----------------------------------------------------------------------
 \ 
 
 PAGE
-." Jegge's fifth Forth v" VERSION .
-." - " UNUSED . ." cells free." CR
+." Jegge's fifth Forth v" VERSION . ." - " UNUSED . ." cells free." CR
 ." BYE or ^D to quit, ^C to interrupt execution." CR
 CR
