@@ -58,7 +58,7 @@ class Machine {
         }
     }
 
-    // swiftlint:disable:next function_body_length
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     init (system: SystemProvided, memory: Memory, rstack: Stack, pstack: Stack, dictionary: Dictionary) {
         self.system = system
         self.memory = memory
@@ -497,6 +497,16 @@ class Machine {
                 throw RuntimeError.unknownWord(name)
             }
             self.dictionary.forget(word: word)
+        }
+        _ = self.dictionary.define(word: "MARKER") {
+            let name = self.word()
+            _ = self.dictionary.define(word: String(ascii: name)) {
+                let word = self.dictionary.find(name)
+                if word == 0 {
+                    throw RuntimeError.unknownWord(name)
+                }
+                self.dictionary.forget(word: word)
+            }
         }
         _ = self.dictionary.define(word: "WORDS") {
             self.system.print(self.dictionary.words().joined(separator: " ") + "\n", error: false)

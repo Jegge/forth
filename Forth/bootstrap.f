@@ -551,3 +551,6 @@ PAGE
 ." Jegge's fifth Forth v" VERSION . ." - " UNUSED . ." cells free." CR
 ." BYE or ^D to quit, ^C to interrupt execution." CR
 CR
+
+MARKER RESET-BUILTIN
+
