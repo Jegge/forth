@@ -128,6 +128,53 @@
 \ https://projecteuler.net/problem=4
 \
 
+: NTH-CHAR-FROM-FRONT ( address length position -- char )
+    NIP     ( address position )
+    + C@    ( char )
+;
+
+: NTH-CHAR-FROM-BACK ( address length position -- char )
+    -       ( address position )
+    +       ( address )
+    1-      ( address )
+    C@      ( char )
+;
+
+: IS-PALINDROME ( address length -- result )
+    0           ( address length index )
+    BEGIN
+        2DUP >
+    WHILE       \ while index < length
+        3 NDUP                  ( address length index address length index )
+        NTH-CHAR-FROM-FRONT     ( address length index left )
+        3 PICK                  ( address length index left address )
+        3 PICK                  ( address length index left address length )
+        3 PICK                  ( address length index left address length index )
+        NTH-CHAR-FROM-BACK      ( address length index left right )
+        <> IF                   \ left == right
+            3 NDROP             (  )
+            FALSE               ( result )
+            EXIT
+        THEN
+        1+
+    REPEAT
+    3 NDROP                     ( result )
+    TRUE
+;
+
+: PEULER-004 ( -- result )
+    0               ( result )
+    1000 100        ( result limit i )
+    DO
+        1000 100    ( result limit j )
+        DO
+            I J *   ( result value )
+            <# #S #> IS-PALINDROME IF \ if result is a palindrome
+                I J * MAX ( result )
+            THEN
+        LOOP
+    LOOP
+;
 
 
 

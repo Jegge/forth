@@ -245,6 +245,24 @@
     DROP
 ;
 
+: NDROP ( xn-1 ... x0 n -- )
+    0       ( limit index )
+    DO
+        DROP
+    LOOP
+;
+
+: NDUP ( xn ... x0 n -- xn ... x0 xn ... x0 )
+    DUP         ( xn ... x0 n n )
+    0           ( xn ... x0 n n index )     \ a * b PICK
+    DO
+        DUP     ( xn ... x0 n n )
+        PICK    ( xn ... x0 n xn )
+        SWAP    ( xn ... x0 xn n )
+    LOOP
+    DROP
+;
+
 ( With the looping constructs, we can now write SPACES, which writes n spaces to stdout. )
 : SPACES    ( n -- )
     BEGIN
