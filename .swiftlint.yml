@@ -1,7 +1,7 @@
 
 line_length: 160
 file_length:
-    warning: 800
+    warning: 1000
     error: 1500
 identifier_name:
     excluded: # excluded via string array

@@ -118,7 +118,16 @@
         OVER IS-PRIME NOT       \ while n is not prime
     WHILE
         NEXT-PRIME-FACTOR       ( n factor )
+        2DUP . . CR
     REPEAT
     DROP                        ( n )
 ;
+
+\-------------------------------------------------------------------------------------------
+\
+\ https://projecteuler.net/problem=4
+\
+
+
+
 

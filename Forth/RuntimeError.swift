@@ -14,6 +14,7 @@ enum RuntimeError: Error {
     case parseError(_: [Char])
     case unknownWord(_: [Char])
     case numberOutOfRange(_: String)
+    case formatError
     case abort
 }
 
@@ -30,6 +31,8 @@ extension RuntimeError: CustomStringConvertible {
             return "Error: '\(String(ascii: name))' is not a known word."
         case .numberOutOfRange(let reason):
             return "Error: number out of range: '\(reason)'"
+        case .formatError:
+            return "Error: format"
         case .abort:
             return ""
         }

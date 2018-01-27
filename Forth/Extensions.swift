@@ -33,4 +33,5 @@ extension Character {
     static let backslash: Char = 92
     static let dash: Char = 45
     static let delete: Char = 127
+    static let zero: Char = 48
 }
