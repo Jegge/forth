@@ -352,27 +352,6 @@
     THEN
 ;
 
-
-\ #     ( n address length position -- n address length position )
-\ #S    ( n address length position -- n address length position )
-\ SIGN  ( n address length position -- n address length position )
-\ HOLD  ( n address length position c -- n address length position )
-
-: <#  ( n -- n address length position )
-    PAD
-    0
-    0
-;
-
-: #>  ( n address length position -- address length )
-    DROP    ( n address length )
-    ROT     ( address length n )
-    DROP    ( address length )
-;
-
-
-
-
 : PAGE ( -- ) ESC ." [0;0H" ESC ." [2J" ;
 
 ( In FORTH, global constants  are defined like this: 10 CONSTANT TEN

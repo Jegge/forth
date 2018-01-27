@@ -110,7 +110,7 @@ class Machine {
             self.currentIp = Memory.align(address: self.currentIp + length)
         }
         // Removes the top item from the stack ( n -- )
-        _ = self.dictionary.define(word: "DROP") {
+        let drop = self.dictionary.define(word: "DROP") {
             _ = try self.pstack.pop()
         }
         // Exchanges the top items on the stack ( n1 n2 -- n2 n1 )
@@ -135,7 +135,7 @@ class Machine {
             try self.pstack.push(v1)
         }
         // Rotates the top three items on the stack right ( n1 n2 n3 -- n2 n3 n1 )
-        _ = self.dictionary.define(word: "ROT") {
+        let rot = self.dictionary.define(word: "ROT") {
             let v3 = try self.pstack.pop()
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
@@ -442,7 +442,7 @@ class Machine {
             let word = try self.pstack.pop()
             try self.pstack.push(self.dictionary.body(for: word))
         }
-        _ = self.dictionary.define(word: "PAD") {
+        let pad = self.dictionary.define(word: "PAD") {
             try self.pstack.push(self.memory.here + Address.padOffset * Memory.Size.cell)
         }
         _ = self.dictionary.define(word: "CELLS") {
@@ -573,6 +573,10 @@ class Machine {
             let number = try self.pstack.pop()
             self.system.print(String(number, radix: Int(self.base)).uppercased().padLeft(toLength: Int(width), withPad: " "), error: false)
         }
+        // Begins number formatting
+        _ = self.dictionary.define(word: "<#", words: [ enter, pad, lit, 0, lit, 0, exit ])
+        // End number formatting
+        _ = self.dictionary.define(word: "#>", words: [ enter, drop, rot, drop, exit ])
         // Formats the leftmost digit of a number into a string ( n address length position -- n address length position )
         _ = self.dictionary.define(word: "#") {
             let position = try self.pstack.pop()
