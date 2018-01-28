@@ -110,7 +110,7 @@ class Machine {
             self.currentIp = Memory.align(address: self.currentIp + length)
         }
         // Removes the top item from the stack ( n -- )
-        let drop = self.dictionary.define(word: "DROP") {
+        _ = self.dictionary.define(word: "DROP") {
             _ = try self.pstack.pop()
         }
         // Exchanges the top items on the stack ( n1 n2 -- n2 n1 )
@@ -135,7 +135,7 @@ class Machine {
             try self.pstack.push(v1)
         }
         // Rotates the top three items on the stack right ( n1 n2 n3 -- n2 n3 n1 )
-        let rot = self.dictionary.define(word: "ROT") {
+        _ = self.dictionary.define(word: "ROT") {
             let v3 = try self.pstack.pop()
             let v2 = try self.pstack.pop()
             let v1 = try self.pstack.pop()
@@ -442,7 +442,7 @@ class Machine {
             let word = try self.pstack.pop()
             try self.pstack.push(self.dictionary.body(for: word))
         }
-        let pad = self.dictionary.define(word: "PAD") {
+        _ = self.dictionary.define(word: "PAD") {
             try self.pstack.push(self.memory.here + Address.padOffset * Memory.Size.cell)
         }
         _ = self.dictionary.define(word: "CELLS") {
@@ -572,7 +572,7 @@ class Machine {
             let width = try self.pstack.pop()
             let number = try self.pstack.pop()
             self.system.print(String(number, radix: Int(self.base)).uppercased().padLeft(toLength: Int(width), withPad: " "), error: false)
-        }        
+        }
         // Interprets the next word on stdin ( -- )
         let interpret = self.dictionary.define(word: "INTERPRET") {
             let name = self.word()
