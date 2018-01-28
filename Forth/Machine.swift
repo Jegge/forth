@@ -84,6 +84,10 @@ class Machine {
         _ = self.dictionary.define(constant: "F_DIRTY", value: Cell(Dictionary.Flags.dirty), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Dictionary.Flags.hidden), stack: self.pstack)
         _ = self.dictionary.define(constant: "ENDOFWORD", value: Dictionary.marker, stack: self.pstack)
+        _ = self.dictionary.define(constant: "CELLMAX", value: Cell.max, stack: self.pstack)
+        _ = self.dictionary.define(constant: "CELLMIN", value: Cell.min, stack: self.pstack)
+        _ = self.dictionary.define(constant: "CHARMAX", value: Cell(Char.max), stack: self.pstack)
+        _ = self.dictionary.define(constant: "CHARMIN", value: Cell(Char.min), stack: self.pstack)
 
         // Pushes the instruction pointer onto the return stack
         let enter = self.dictionary.define(word: "ENTER") {
@@ -451,18 +455,6 @@ class Machine {
         _ = self.dictionary.define(word: "CHARS") {
             try self.pstack.push(try self.pstack.pop() * Memory.Size.char)
         }
-        _ = self.dictionary.define(word: "CELLMAX") {
-            try self.pstack.push(Cell.max)
-        }
-        _ = self.dictionary.define(word: "CELLMIN") {
-            try self.pstack.push(Cell.min)
-        }
-        _ = self.dictionary.define(word: "CHARMAX") {
-            try self.pstack.push(Cell(Char.max))
-        }
-        _ = self.dictionary.define(word: "CHARMIN") {
-            try self.pstack.push(Cell(Char.min))
-        }
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
             self.dictionary.toggleImmediate(word: self.dictionary.latest)
         }
@@ -476,7 +468,7 @@ class Machine {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
             let name = self.memory[Text(address: address, length: length)]
-            _ = self.dictionary.create(word: name, immediate: false)
+            try self.pstack.push(self.dictionary.create(word: name, immediate: false))
         }
         let branch = self.dictionary.define(word: "BRANCH") {
             self.currentIp += self.memory[self.currentIp + Memory.Size.cell]
