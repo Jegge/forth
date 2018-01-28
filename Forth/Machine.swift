@@ -585,6 +585,9 @@ class Machine {
             let number = try self.pstack.pop()
             self.system.print(String(number, radix: Int(self.base)).uppercased().padLeft(toLength: Int(width), withPad: " "), error: false)
         }
+        _ = self.dictionary.define(word: "ABORT") {
+            throw RuntimeError.abort
+        }
         // Interprets the next word on stdin ( -- )
         let interpret = self.dictionary.define(word: "INTERPRET") {
             let name = self.word()
@@ -782,7 +785,7 @@ class Machine {
                     self.currentIp = word
                 }
             } catch {
-                self.system.print("\n\(error)\n".styled(style: .bold), error: false)
+                self.system.print("\(error)".styled(style: .bold), error: false)
                 self.reset()
             }
         }

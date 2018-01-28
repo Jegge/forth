@@ -14,7 +14,6 @@ enum RuntimeError: Error {
     case parseError(_: [Char])
     case unknownWord(_: [Char])
     case numberOutOfRange(_: String)
-    case formatError
     case abort
 }
 
@@ -22,17 +21,15 @@ extension RuntimeError: CustomStringConvertible {
     var description: String {
         switch self {
         case .stackDepleted(let name):
-            return "Error: expected an element on the \(name) stack, but the stack was empty."
+            return "\nError: expected an element on the \(name) stack, but the stack was empty.\n"
         case .stackOverflow(let name):
-            return "Error: tried to put an element on the \(name) stack, but the stack was full."
+            return "\nError: tried to put an element on the \(name) stack, but the stack was full.\n"
         case .parseError(let token):
-            return "Error: '\(String(ascii: token))' is neither a known word nor a number literal."
+            return "\nError: '\(String(ascii: token))' is neither a known word nor a number literal.\n"
         case .unknownWord(let name):
-            return "Error: '\(String(ascii: name))' is not a known word."
+            return "\nError: '\(String(ascii: name))' is not a known word.\n"
         case .numberOutOfRange(let reason):
-            return "Error: number out of range: '\(reason)'"
-        case .formatError:
-            return "Error: format"
+            return "\nError: number out of range: '\(reason)'.\n"
         case .abort:
             return ""
         }
