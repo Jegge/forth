@@ -375,8 +375,6 @@
     THEN
 ;
 
-: PAGE ( -- ) ESC ." [0;0H" ESC ." [2J" ;
-
 ( In FORTH, global constants  are defined like this: 10 CONSTANT TEN
   When TEN is executed, it leaves the integer 10 on the stack. )
 : CONSTANT
@@ -617,6 +615,21 @@ VARIABLE >OUT
     0< IF
         '-' HOLD
     THEN
+;
+
+/
+/ CONSOLE OUTPUT
+/
+
+: AT-XY ( x y -- )
+    ESC
+    <# ';' HOLD #S '[' HOLD #> TYPE    
+    <# 72 HOLD #S  #> TYPE
+;
+
+: PAGE ( -- )
+    ESC ." [2J"
+    0 0 AT-XY
 ;
 
 \
