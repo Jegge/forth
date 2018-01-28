@@ -49,6 +49,7 @@ struct Address {
     static let pstackSize: Cell = Memory.Size.cell * 1024
     static let bufferSize: Cell = Memory.Size.char * 256
     static let padOffset: Cell = Memory.Size.cell * 64
+    static let outOffset: Cell = Memory.Size.cell * 256
 
     static let dictionary: Cell = Memory.Size.cell * 2048
 }

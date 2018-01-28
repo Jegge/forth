@@ -380,12 +380,13 @@
 ( In FORTH, global constants  are defined like this: 10 CONSTANT TEN
   When TEN is executed, it leaves the integer 10 on the stack. )
 : CONSTANT
-    WORD CREATE DROP    ( create word, ignore address )
-    DOCOL ,             ( append DOCOL (the codeword field of this word) )
-    ' LIT ,             ( append the codeword LIT )
-    ,                   ( append the value on the top of the stack )
-    ' EXIT ,            ( append the codeword EXIT )
-    ENDOFWORD ,         ( REMOVE LATER ON )
+    WORD        ( get the name (the name follows CONSTANT) )
+    CREATE      ( make the dictionary entry )
+    DOCOL ,     ( append DOCOL (the codeword field of this word) )
+    ' LIT ,     ( append the codeword LIT )
+    ,           ( append the value on the top of the stack )
+    ' EXIT ,    ( append the codeword EXIT )
+    ENDOFWORD ,       ( REMOVE LATER ON )
 ;
 
 : ALLOT        ( n -- )
@@ -393,7 +394,7 @@
 ;
 
 : VARIABLE
-    WORD CREATE DROP    ( create word, ignore address )
+    WORD CREATE
     DOCOL ,
     ' LIT ,
     HERE @ 3 CELLS +    ( make pointer after ENDOFWORD )
@@ -412,11 +413,11 @@
   VAL               pushes the value (30) directly on the stack )
 
 : VALUE        ( n -- )
-    WORD CREATE DROP    ( make the dictionary entry (the name follows VALUE) )
-    DOCOL ,             ( append DOCOL )
-    ' LIT ,             ( append the codeword LIT )
-    ,                   ( append the initial value )
-    ' EXIT ,            ( append the codeword EXIT )
+    WORD CREATE    ( make the dictionary entry (the name follows VALUE) )
+    DOCOL ,        ( append DOCOL )
+    ' LIT ,        ( append the codeword LIT )
+    ,              ( append the initial value )
+    ' EXIT ,       ( append the codeword EXIT )
     ENDOFWORD ,
 ;
 
@@ -511,9 +512,10 @@
 ;
 
 : :NONAME
-    0 0 CREATE          ( create a word with no name - we need a dictionary header because ; expects it )
-    DOCOL ,             ( compile DOCOL (the codeword) )
-    ]                   ( go into compile mode )
+    0 0 CREATE    ( create a word with no name - we need a dictionary header because ; expects it )
+    HERE @        ( current HERE value is the address of the codeword, ie. the xt )
+    DOCOL ,        ( compile DOCOL (the codeword) )
+    ]        ( go into compile mode )
 ;
 
 : ['] IMMEDIATE
@@ -571,12 +573,12 @@
 VARIABLE >OUT
 
 : <#
-    PAD 12 CHARS + >OUT !
+    OUT0 12 CHARS + >OUT !
 ;
 
 : #>    ( -- address length )
     >OUT @          ( address )
-    PAD 12 CHARS +  ( address end )
+    OUT0 12 CHARS +  ( address end )
     >OUT @ -        ( address length )
 ;
 
@@ -617,4 +619,5 @@ PAGE
 CR
 
 MARKER RESET-BUILTIN
+
 

@@ -449,6 +449,9 @@ class Machine {
         _ = self.dictionary.define(word: "PAD") {
             try self.pstack.push(self.memory.here + Address.padOffset * Memory.Size.cell)
         }
+        _ = self.dictionary.define(word: "OUT0") {
+            try self.pstack.push(self.memory.here + Address.outOffset * Memory.Size.cell)
+        }
         _ = self.dictionary.define(word: "CELLS") {
             try self.pstack.push(try self.pstack.pop() * Memory.Size.cell)
         }
@@ -468,7 +471,7 @@ class Machine {
             let length = try self.pstack.pop()
             let address = try self.pstack.pop()
             let name = self.memory[Text(address: address, length: length)]
-            try self.pstack.push(self.dictionary.create(word: name, immediate: false))
+            _ = self.dictionary.create(word: name, immediate: false)
         }
         let branch = self.dictionary.define(word: "BRANCH") {
             self.currentIp += self.memory[self.currentIp + Memory.Size.cell]
