@@ -494,6 +494,18 @@ class Machine {
             let lhs = String(ascii: self.memory[Text(address: lhsAddress, length: lhsLength)])
             try self.pstack.push(Cell(rhs.compare(lhs).rawValue))
         }
+        _ = self.dictionary.define(word: "TIME&DATE") {
+            let date = Date()
+            try self.pstack.push(Cell(Calendar.current.component(.second, from: date)))
+            try self.pstack.push(Cell(Calendar.current.component(.minute, from: date)))
+            try self.pstack.push(Cell(Calendar.current.component(.hour, from: date)))
+            try self.pstack.push(Cell(Calendar.current.component(.day, from: date)))
+            try self.pstack.push(Cell(Calendar.current.component(.month, from: date)))
+            try self.pstack.push(Cell(Calendar.current.component(.year, from: date)))
+        }
+        _ = self.dictionary.define(word: "MS") {
+            usleep(UInt32(bitPattern: try self.pstack.pop()))
+        }
         _ = self.dictionary.define(word: "'") {
             self.currentIp += Memory.Size.cell
             let word: Cell = self.memory[self.currentIp]
