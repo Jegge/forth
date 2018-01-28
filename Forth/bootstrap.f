@@ -108,6 +108,12 @@
     ' >R ,
 ;
 
+: UNLOOP IMMEDIATE
+    ' > R ,
+    ' > R ,
+    ' 2DROP ,
+;
+
 : LOOP IMMEDIATE    \ ( -- )
     ' R> ,
     ' R> ,
@@ -287,7 +293,6 @@
     DROP
     CR
 ;
-
 
 ( c a b WITHIN returns true if a <= c and c < b )
 (  or define without ifs: OVER - >R - R>  U<  )
