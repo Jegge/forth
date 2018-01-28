@@ -451,6 +451,18 @@ class Machine {
         _ = self.dictionary.define(word: "CHARS") {
             try self.pstack.push(try self.pstack.pop() * Memory.Size.char)
         }
+        _ = self.dictionary.define(word: "CELLMAX") {
+            try self.pstack.push(Cell.max)
+        }
+        _ = self.dictionary.define(word: "CELLMIN") {
+            try self.pstack.push(Cell.min)
+        }
+        _ = self.dictionary.define(word: "CHARMAX") {
+            try self.pstack.push(Cell(Char.max))
+        }
+        _ = self.dictionary.define(word: "CHARMIN") {
+            try self.pstack.push(Cell(Char.min))
+        }
         _ = self.dictionary.define(word: "IMMEDIATE", immediate: true) {
             self.dictionary.toggleImmediate(word: self.dictionary.latest)
         }
