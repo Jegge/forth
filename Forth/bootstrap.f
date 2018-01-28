@@ -109,8 +109,8 @@
 ;
 
 : UNLOOP IMMEDIATE
-    ' >R ,
-    ' >R ,
+    ' R> ,
+    ' R> ,
     ' 2DROP ,
 ;
 
