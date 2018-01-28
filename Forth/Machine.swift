@@ -95,6 +95,13 @@ class Machine {
         }
         _ = self.dictionary.define(constant: "DOCOL", value: enter, stack: self.pstack)
 
+        // Skips all input until the next LINEFEED
+        _ = self.dictionary.define(word: "\\", immediate: true) {
+            var character = self.key()
+            while character != Character.newline {
+                character = self.key()
+            }
+        }
         // Pops the instruction pointer from the return stack
         let exit = self.dictionary.define(word: "EXIT") {
             self.currentIp = try self.rstack.pop()
@@ -679,6 +686,9 @@ class Machine {
         while true {
             if self.buffer == nil {
                 self.buffer = self.system.readLine()
+                if self.buffer != nil {
+                    self.buffer!.append(" \n")
+                }
             }
 
             guard let line = self.buffer else {
@@ -700,30 +710,17 @@ class Machine {
 
     private func word () -> [Char] {
         var buffer: [Char] = []
-        var character: Char = 0
+        var character: Char = self.key()
 
         // skip spaces, tabs and comments
-        while true {
+        while character == Character.space || character == Character.tab || character == Character.newline {
             character = self.key()
-            while character == Character.space ||
-                character == Character.tab {
-                    character = self.key()
-            }
-            if character == Character.backslash {
-                while character != Character.newline {
-                    character = self.key()
-                }
-            } else {
-                break
-            }
         }
 
         // read word until space, tab or newline
-        while character != Character.space &&
-            character != Character.tab &&
-            character != Character.newline {
-                buffer.append(character)
-                character = self.key()
+        while character != Character.space && character != Character.tab && character != Character.newline {
+            buffer.append(character)
+            character = self.key()
         }
 
         return Array(buffer[0..<min(Int(Address.bufferSize), buffer.count)])

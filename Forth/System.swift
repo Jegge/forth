@@ -45,11 +45,12 @@ class System: SystemProvided {
     func exit(_ value: Cell) -> Never {
         Darwin.exit(Int32(value))
     }
+    /// reads the next line from stdin without \n
     func readLine () -> String? {
         if self.lines.count > 0 {
-            return self.lines.removeFirst() + "\n"
+            return self.lines.removeFirst()
         }
-        return Swift.readLine(strippingNewline: false)
+        return Swift.readLine()
     }
 
     func input (port: Cell) throws  -> Cell {
