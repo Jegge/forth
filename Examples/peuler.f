@@ -177,4 +177,45 @@
 ;
 
 
+\-------------------------------------------------------------------------------------------
+\
+\ https://projecteuler.net/problem=5
+\
+
+: IS-MULTIPLE   ( n1 n2 -- 0/1 ) \ n1 is a multiple of n2
+    MOD NOT
+;
+
+: IS-DIVISIBLE-BY-ANY-IN ( n limit -- result )
+    TUCK            ( limit n limit )
+    2               ( limit n limit index )
+    DO
+        DUP I IS-MULTIPLE NOT IF  \ if n is not a multiple of index
+            UNLOOP  ( limit n )
+            2DROP   ( )
+            FALSE   ( result )
+            EXIT
+        THEN
+        DUP         ( limit n n)
+    +LOOP
+    2DROP       ( )
+    TRUE        ( result )
+;
+
+: PEULER-005    ( n divisor -- result )
+    TUCK        ( divisor n divisor )
+    DO
+        I DUP IS-DIVISIBLE-BY-ANY-IN IF \ if n is divisibly by any up to divisor
+            S" HIER A"
+            I       ( divisor result )
+            NIP     ( result )
+            UNLOOP
+            EXIT
+        THEN
+        DUP         ( divisor divisor )
+    +LOOP
+    S" HIER B"
+    DROP            (   )
+;
+
 
