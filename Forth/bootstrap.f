@@ -576,7 +576,8 @@ VARIABLE >OUT
     OUT0 12 CHARS + >OUT !
 ;
 
-: #>    ( -- address length )
+: #>    ( n -- address length )
+    DROP
     >OUT @          ( address )
     OUT0 12 CHARS +  ( address end )
     >OUT @ -        ( address length )
@@ -585,6 +586,15 @@ VARIABLE >OUT
 : HOLD ( char -- )
     1 >OUT -!   \ decrement pointer
     >OUT @ C!   \ store char at *pointer
+;
+
+: HOLDS ( addr length -- )
+    OVER        ( address length address )
+    +           ( limit index )
+    DO
+        I 1- C@ HOLD
+        1
+    -LOOP
 ;
 
 : #     ( n -- n )
