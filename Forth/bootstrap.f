@@ -71,7 +71,7 @@
 
 \ 
 \ CONDITIONAL EXECUTION ----------------------------------------------------------------------
-\ 
+\
 
 \ <condition> IF <true-part> THEN
 : IF IMMEDIATE      \ ( n -- )
@@ -109,8 +109,8 @@
 ;
 
 : UNLOOP IMMEDIATE
-    ' > R ,
-    ' > R ,
+    ' >R ,
+    ' >R ,
     ' 2DROP ,
 ;
 
@@ -564,6 +564,49 @@
     MOD  ( n1 n2 remainder )
     -ROT ( remainder n1 n2 )
     /    ( remainder quotient )
+;
+
+\
+\ NUMBER FORMATTING ----------------------------------------------------------------------
+\
+
+VARIABLE >OUT
+
+: <#
+    PAD 12 CHARS + >OUT !
+;
+
+: #>    ( -- address length )
+    >OUT @          ( address )
+    PAD 12 CHARS +  ( address end )
+    >OUT @ -        ( address length )
+;
+
+: HOLD ( char -- )
+    1 >OUT -!   \ decrement pointer
+    >OUT @ C!   \ store char at *pointer
+;
+
+: #     ( n -- n )
+    BASE @
+    /MOD        ( remainder quotient )
+    SWAP        ( quotient remainder )
+    '0' +       ( quotient remainder )
+    HOLD
+;
+
+: #S    ( n -- 0 )
+    BEGIN
+        DUP 0<>
+    WHILE
+        #  ( n )
+    REPEAT
+;
+
+: SIGN   ( n -- )
+    0< IF
+        '-' HOLD
+    THEN
 ;
 
 \

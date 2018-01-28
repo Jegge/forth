@@ -572,72 +572,7 @@ class Machine {
             let width = try self.pstack.pop()
             let number = try self.pstack.pop()
             self.system.print(String(number, radix: Int(self.base)).uppercased().padLeft(toLength: Int(width), withPad: " "), error: false)
-        }
-        // Begins number formatting
-        _ = self.dictionary.define(word: "<#", words: [ enter, pad, lit, 0, lit, 0, exit ])
-        // End number formatting
-        _ = self.dictionary.define(word: "#>", words: [ enter, drop, rot, drop, exit ])
-        // Formats the leftmost digit of a number into a string ( n address length position -- n address length position )
-        _ = self.dictionary.define(word: "#") {
-            let position = try self.pstack.pop()
-            let length = try self.pstack.pop()
-            let address = try self.pstack.pop()
-            let number = try self.pstack.pop()
-            let string = String(abs(number), radix: Int(self.base))
-            if string.count == 0 {
-                throw RuntimeError.formatError
-            }
-            self.memory[address + position] = Character.zero + Char(string[string.startIndex..<string.index(after: string.startIndex)])!
-            let rest = string.count > 1 ? Cell(string[string.index(after: string.startIndex)...])! : 0
-            try self.pstack.push(rest)
-            try self.pstack.push(address)
-            try self.pstack.push(length + 1)
-            try self.pstack.push(position + 1)
-        }
-        // Formats the digits of a number into a string  ( n address length position -- n address length position )
-        _ = self.dictionary.define(word: "#S") {
-            var position = try self.pstack.pop()
-            var length = try self.pstack.pop()
-            let address = try self.pstack.pop()
-            let number = try self.pstack.pop()
-            for char in String(abs(number), radix: Int(self.base)) {
-                let value = Char(String(char), radix: Int(self.base))!
-                self.memory[address + position] = Character.zero + value
-                position += 1
-                length += 1
-            }
-            try self.pstack.push(0)
-            try self.pstack.push(address)
-            try self.pstack.push(length)
-            try self.pstack.push(position)
-        }
-        // Appends a '-' to the string if n is negative ( n address length position -- n address length position )
-        _ = self.dictionary.define(word: "SIGN") {
-            var position = try self.pstack.pop()
-            var length = try self.pstack.pop()
-            let address = try self.pstack.pop()
-            let number = try self.pstack.pop()
-            if number < 0 {
-                self.memory[address + position] = Character.dash
-                position += 1
-                length += 1
-            }
-            try self.pstack.push(number)
-            try self.pstack.push(address)
-            try self.pstack.push(length)
-            try self.pstack.push(position)
-        }
-        // Appends a literal to the string if n is negative ( n address length position c -- n address length position )
-        _ = self.dictionary.define(word: "HOLD") {
-            let character = try self.pstack.pop()
-            let position = try self.pstack.pop()
-            let length = try self.pstack.pop()
-            let address = try self.pstack.pop()
-            self.memory[address + position] = Char(character)
-            try self.pstack.push(address)
-            try self.pstack.push(length + 1)
-            try self.pstack.push(position + 1)
-        }
+        }        
         // Interprets the next word on stdin ( -- )
         let interpret = self.dictionary.define(word: "INTERPRET") {
             let name = self.word()
