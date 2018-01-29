@@ -58,6 +58,7 @@
 		D26B2AF3201B142600A30998 /* ConsoleColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsoleColors.swift; sourceTree = "<group>"; };
 		D275BD9F201A603A00AF5B91 /* peuler.f */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.fortran; path = peuler.f; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		D27D4BB22014D2B500E25FE2 /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text; path = .swiftlint.yml; sourceTree = "<group>"; };
+		D2E6577F201F0FBE004C4CB0 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +75,7 @@
 		D25E68FC200C887F000059EB = {
 			isa = PBXGroup;
 			children = (
+				D2E6577F201F0FBE004C4CB0 /* .gitignore */,
 				D27D4BB22014D2B500E25FE2 /* .swiftlint.yml */,
 				D26B2AEC2019F82A00A30998 /* Examples */,
 				D25E6907200C887F000059EB /* Forth */,
