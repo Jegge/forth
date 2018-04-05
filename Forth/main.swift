@@ -9,9 +9,6 @@
 import Foundation
 import Darwin
 
-// TODO: LEAVE
-// TODO: NUMBER -> >NUMBER
-
 var lines: [String] = []
 
 do {
