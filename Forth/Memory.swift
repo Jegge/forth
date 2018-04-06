@@ -62,10 +62,13 @@ class Memory {
             if !self.ensureSizeFor(address: address + Memory.Size.cell) {
                 return 0
             }
+
+            // swiftlint:disable identifier_name
             let a = Cell(self.data[Int(address + 0)]) << 24
             let b = Cell(self.data[Int(address + 1)]) << 16
             let c = Cell(self.data[Int(address + 2)]) << 8
             let d = Cell(self.data[Int(address + 3)])
+            // swiftlint:enable identifier_name
             return a | b | c | d
         }
         set {
@@ -150,23 +153,26 @@ class Memory {
         while index < address + length {
 
             result += String(format: "% 8X |", index)
-            for i in 0..<16 {
-                if i != 0 && i % 4 == 0 {
+
+            for offset in 0..<16 {
+                if offset != 0 && offset % 4 == 0 {
                     result += "  "
                 }
-                if Int(index) + Int(i) < address + length {
-                    result += String(format: "% 3X", self[Cell(index) + Cell(i)] as Char)
+                if Int(index) + Int(offset) < address + length {
+                    result += String(format: "% 3X", self[Cell(index) + Cell(offset)] as Char)
                 } else {
                     result += "   "
                 }
             }
+
             result += " | "
-            for i in 0..<16 {
-                if i != 0 && i % 4 == 0 {
+
+            for offset in 0..<16 {
+                if offset != 0 && offset % 4 == 0 {
                     result += " "
                 }
-                if Int(index) + Int(i) < address + length {
-                    let character = self[Cell(index) + Cell(i)] as Char
+                if Int(index) + Int(offset) < address + length {
+                    let character = self[Cell(index) + Cell(offset)] as Char
                     if character >= Character.space && character < Character.delete {
                         result += String(format: "%c", character)
                     } else {
@@ -174,6 +180,7 @@ class Memory {
                     }
                 }
             }
+
             index += 16
             result += "\n"
         }

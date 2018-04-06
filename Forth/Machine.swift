@@ -79,7 +79,7 @@ class Machine {
         _ = self.dictionary.define(variable: "IP1", value: 0, address: Address.ip1, stack: self.pstack)
 
         _ = self.dictionary.define(constant: "VERSION", value: Machine.version, stack: self.pstack)
-        let rz = self.dictionary.define(constant: "R0", value: Address.rstack, stack: self.pstack)
+        let rzero = self.dictionary.define(constant: "R0", value: Address.rstack, stack: self.pstack)
         _ = self.dictionary.define(constant: "F_IMMED", value: Cell(Dictionary.Flags.immediate), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_DIRTY", value: Cell(Dictionary.Flags.dirty), stack: self.pstack)
         _ = self.dictionary.define(constant: "F_HIDDEN", value: Cell(Dictionary.Flags.hidden), stack: self.pstack)
@@ -126,42 +126,42 @@ class Machine {
         }
         // Exchanges the top items on the stack ( n1 n2 -- n2 n1 )
         _ = self.dictionary.define(word: "SWAP") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v2)
-            try self.pstack.push(v1)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value2)
+            try self.pstack.push(value1)
         }
         // Duplicates the top item on the stack ( n -- n n )
         _ = self.dictionary.define(word: "DUP") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(v)
-            try self.pstack.push(v)
+            let value = try self.pstack.pop()
+            try self.pstack.push(value)
+            try self.pstack.push(value)
         }
         // Duplicates the second item on the stack  ( n1 n2 -- n1 n2 n1 )
         _ = self.dictionary.define(word: "OVER") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1)
-            try self.pstack.push(v2)
-            try self.pstack.push(v1)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1)
+            try self.pstack.push(value2)
+            try self.pstack.push(value1)
         }
         // Rotates the top three items on the stack right ( n1 n2 n3 -- n2 n3 n1 )
         _ = self.dictionary.define(word: "ROT") {
-            let v3 = try self.pstack.pop()
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v2)
-            try self.pstack.push(v3)
-            try self.pstack.push(v1)
+            let value3 = try self.pstack.pop()
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value2)
+            try self.pstack.push(value3)
+            try self.pstack.push(value1)
         }
         // Rotates the top three items on the stack left ( n1 n2 n3 -- n3 n1 n2 )
         _ = self.dictionary.define(word: "-ROT") {
-            let v3 = try self.pstack.pop()
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v3)
-            try self.pstack.push(v1)
-            try self.pstack.push(v2)
+            let value3 = try self.pstack.pop()
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value3)
+            try self.pstack.push(value1)
+            try self.pstack.push(value2)
         }
         // Removes the top two item from the stack ( n1 n2  -- )
         _ = self.dictionary.define(word: "2DROP") {
@@ -170,30 +170,30 @@ class Machine {
         }
         // Duplicates the top two item on the stack ( n1 n2 -- n1 n2 n1 n2 )
         _ = self.dictionary.define(word: "2DUP") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1)
-            try self.pstack.push(v2)
-            try self.pstack.push(v1)
-            try self.pstack.push(v2)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1)
+            try self.pstack.push(value2)
+            try self.pstack.push(value1)
+            try self.pstack.push(value2)
         }
         // Exchanges the top two pairs of items on the stack ( n1 n2 n3 n4 -- n3 n4 n1 n2 )
         _ = self.dictionary.define(word: "2SWAP") {
-            let v4 = try self.pstack.pop()
-            let v3 = try self.pstack.pop()
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v3)
-            try self.pstack.push(v4)
-            try self.pstack.push(v1)
-            try self.pstack.push(v2)
+            let value4 = try self.pstack.pop()
+            let value3 = try self.pstack.pop()
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value3)
+            try self.pstack.push(value4)
+            try self.pstack.push(value1)
+            try self.pstack.push(value2)
         }
         // Duplicates the top item on the stack if it is non-zero ( n -- | n -- n n )
         _ = self.dictionary.define(word: "?DUP") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(v)
-            if v != 0 {
-                try self.pstack.push(v)
+            let value = try self.pstack.pop()
+            try self.pstack.push(value)
+            if value != 0 {
+                try self.pstack.push(value)
             }
         }
         // Increments the top item on the stack by 1 ( n -- n+1 )
@@ -222,114 +222,114 @@ class Machine {
         }
         // Adds the top two elements of the stack and pushes the result ( n1 n2 -- n1+n2 )
         _ = self.dictionary.define(word: "+") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(try self.add(v1, to: v2))
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(try self.add(value1, to: value2))
         }
         // Substracts the second element of the stack from the top element and pushes the result ( n1 n2 -- n1-n2 )
         _ = self.dictionary.define(word: "-") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(try self.substract(v2, from: v1))
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(try self.substract(value2, from: value1))
         }
         // Multiplies the top two elements of the stack and pushes the result ( n1 n2 -- n1*n2 )
         _ = self.dictionary.define(word: "*") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(try self.multiply(v1, by: v2))
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(try self.multiply(value1, by: value2))
         }
         _ = self.dictionary.define(word: "LSHIFT") { // (
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 << v2)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 << value2)
         }
         _ = self.dictionary.define(word: "RSHIFT") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 >> v2)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 >> value2)
         }
         _ = self.dictionary.define(word: "/") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(try self.divide(v1, by: v2))
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(try self.divide(value1, by: value2))
         }
         _ = self.dictionary.define(word: "MOD") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(try self.modulo(v1, by: v2))
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(try self.modulo(value1, by: value2))
         }
         _ = self.dictionary.define(word: "=") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 == v2 ? 1 : 0)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 == value2 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "<>") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 != v2 ? 1 : 0)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 != value2 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "<") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 < v2 ? 1 : 0)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 < value2 ? 1 : 0)
         }
         _ = self.dictionary.define(word: ">") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 > v2 ? 1 : 0)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 > value2 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "<=") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 <= v2 ? 1 : 0)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 <= value2 ? 1 : 0)
         }
         _ = self.dictionary.define(word: ">=") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 >= v2 ? 1 : 0)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 >= value2 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "0=") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(v == 0 ? 1 : 0)
+            let value = try self.pstack.pop()
+            try self.pstack.push(value == 0 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "0<>") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(v != 0 ? 1 : 0)
+            let value = try self.pstack.pop()
+            try self.pstack.push(value != 0 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "0<") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(v < 0 ? 1 : 0)
+            let value = try self.pstack.pop()
+            try self.pstack.push(value < 0 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "0>") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(v > 0 ? 1 : 0)
+            let value = try self.pstack.pop()
+            try self.pstack.push(value > 0 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "0<=") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(v <= 0 ? 1 : 0)
+            let value = try self.pstack.pop()
+            try self.pstack.push(value <= 0 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "0>=") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(v >= 0 ? 1 : 0)
+            let value = try self.pstack.pop()
+            try self.pstack.push(value >= 0 ? 1 : 0)
         }
         _ = self.dictionary.define(word: "AND") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 & v2)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 & value2)
         }
         _ = self.dictionary.define(word: "OR") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 | v2)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 | value2)
         }
         _ = self.dictionary.define(word: "XOR") {
-            let v2 = try self.pstack.pop()
-            let v1 = try self.pstack.pop()
-            try self.pstack.push(v1 ^ v2)
+            let value2 = try self.pstack.pop()
+            let value1 = try self.pstack.pop()
+            try self.pstack.push(value1 ^ value2)
         }
         _ = self.dictionary.define(word: "INVERT") {
-            let v = try self.pstack.pop()
-            try self.pstack.push(~v)
+            let value = try self.pstack.pop()
+            try self.pstack.push(~value)
         }
         _ = self.dictionary.define(word: "SYS-EXIT") {
             self.system.exit(try self.pstack.pop())
@@ -637,7 +637,7 @@ class Machine {
         }
 
         self.wordQuit = self.dictionary.define(word: "QUIT", words: [
-            rz, rspstore, interpret, branch, Memory.Size.cell * -2
+            rzero, rspstore, interpret, branch, Memory.Size.cell * -2
         ])
         self.currentIp = wordQuit
     }
@@ -804,9 +804,9 @@ extension Machine: CustomStringConvertible {
     var description: String {
         var address = self.currentIp
         let name = self.dictionary.see(at: &address, base: self.base).padding(toLength: 20, withPad: " ", startingAt: 0)
-        let ip = "\(self.currentIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
+        let iptr = "\(self.currentIp)".padding(toLength: 7, withPad: " ", startingAt: 0)
         let pst = self.pstack.dump(base: self.base).padding(toLength: 20, withPad: " ", startingAt: 0)
         let rst = self.rstack.dump(base: self.base).padding(toLength: 20, withPad: " ", startingAt: 0)
-        return "IP: \(ip) | PST: \(pst) | RST: \(rst) | \(name)"
+        return "IP: \(iptr) | PST: \(pst) | RST: \(rst) | \(name)"
     }
 }
